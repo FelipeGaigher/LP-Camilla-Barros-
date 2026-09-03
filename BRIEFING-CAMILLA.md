@@ -22,12 +22,12 @@ Sem isso o site não pode ir ao ar. É exigência do Conselho, não capricho.
 
 ## Bloco 2, o consultório
 
-- [ ] Endereço completo: rua, número, complemento (sala/andar), bairro, cidade, CEP
-- [ ] Link do Google Maps do consultório
+- [x] ~~Endereço completo~~ Rua José Alexandre Buaiz, 190, sala 714, Ed. Master Tower, Enseada do Suá, Vitória/ES, 29050-918
+- [ ] Link do Google Maps do consultório (o pin exato, para o botão "como chegar")
 - [ ] O consultório tem perfil no Google Meu Negócio? Se não, criar. É de onde vem
       a maior parte dos pacientes de busca local.
 - [ ] Horário de atendimento, por dia da semana
-- [ ] Tem estacionamento? No prédio, conveniado ou na rua?
+- [ ] Tem estacionamento no Master Tower? No prédio, conveniado ou na rua? (pergunta que mais aparece em FAQ de clínica)
 - [ ] Acessibilidade: elevador, rampa, banheiro adaptado?
 - [ ] Atende convênio? Quais? Ou é particular com nota para reembolso?
 
@@ -41,10 +41,12 @@ Sem isso o site não pode ir ao ar. É exigência do Conselho, não capricho.
 
 ## Bloco 4, tratamentos
 
-Hoje temos 4 blocos genéricos (estética, reabilitação, prevenção, urgência).
-Precisamos confirmar com ela:
+Os 7 procedimentos que ela informou estão agrupados em 4 cards no site: Desenho do
+sorriso (lentes em porcelana, lentes em resina, gengivoplastia), Clareamento
+(consultório e caseiro), Saúde e manutenção (profilaxia, raspagem, restaurações) e
+Proteção do sorriso (placa para bruxismo). Falta confirmar:
 
-- [ ] Quais tratamentos ela realmente faz e quer divulgar
+- [x] ~~Quais tratamentos ela realmente faz~~ profilaxia, raspagem, lentes em resina, lentes em porcelana, gengivoplastia, clareamento (caseiro e consultório), restaurações, placa para bruxismo
 - [ ] Quais **não** faz e encaminha para outro profissional
 - [ ] Qual é o carro-chefe, o que ela mais quer atrair
 - [ ] Para cada tratamento: uma explicação em linguagem de paciente, não de dentista

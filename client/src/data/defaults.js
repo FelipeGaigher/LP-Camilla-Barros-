@@ -16,21 +16,21 @@
 export const defaults = {
   // ------------------------------------------------------------------ SEO
   seo: {
-    title: 'Dra. Camilla Barros | Odontologia em Vitoria, ES',
+    title: 'Dra. Camilla Barros | Dentista na Enseada do Sua, Vitoria ES',
     description:
-      '[PLACEHOLDER] Consultorio odontologico em Vitoria, ES. Atendimento individualizado, planejamento digital e cuidado em cada etapa do seu tratamento.',
+      'Consultorio odontologico na Enseada do Sua, Vitoria ES. Lentes em porcelana e resina, clareamento, gengivoplastia, limpeza e placa para bruxismo.',
     ogImage: '',
     favicon: '',
-    siteUrl: 'https://dracamilla.com.br',
-    themeColor: '#FAF7F2',
+    siteUrl: 'https://dracamillabarros.com.br',
+    themeColor: '#FDFAF6',
     // Dados estruturados schema.org/Dentist (SEO local)
     schema: {
-      name: '[PLACEHOLDER] Consultorio Dra. Camilla Barros',
-      street: '[PLACEHOLDER] Rua Exemplo, 000, Sala 00',
-      district: '[PLACEHOLDER] Bairro',
+      name: 'Consultorio Odontologico Dra. Camilla Barros',
+      street: 'Rua Jose Alexandre Buaiz, 190, Sala 714, Edificio Master Tower',
+      district: 'Enseada do Sua',
       city: 'Vitoria',
       state: 'ES',
-      postalCode: '[PLACEHOLDER] 29000-000',
+      postalCode: '29050-918',
       latitude: '',
       longitude: '',
       priceRange: '',
@@ -39,7 +39,7 @@ export const defaults = {
 
   // ----------------------------------------------------------------- HERO
   hero: {
-    eyebrow: 'Odontologia em Vitoria, ES',
+    eyebrow: 'Odontologia na Enseada do Sua, Vitoria',
     title: 'Cuidado que se',
     titleAccent: 'nota no detalhe',
     subtitle:
@@ -65,7 +65,7 @@ export const defaults = {
     // Areas de atuacao. Atencao: so anunciar "especialista em X" se houver
     // titulo de especialista registrado no CRO. Caso contrario, usar
     // "atuacao em" / "clinica geral".
-    atuacao: '[PLACEHOLDER] Atuacao em odontologia estetica e reabilitacao oral',
+    atuacao: 'Atuacao em odontologia estetica e preventiva',
     valores: [
       { title: 'Clareza', text: 'Voce entende o que sera feito, por que e em quanto tempo, antes de comecar.' },
       { title: 'Tempo', text: 'Consultas com hora marcada e sem sobreposicao, para atender uma pessoa por vez.' },
@@ -92,40 +92,42 @@ export const defaults = {
     title: 'O que fazemos aqui',
     intro:
       'Cada plano e montado a partir do seu caso, do seu tempo e do que voce quer resolver primeiro. Nada e padrao.',
+    // Os 4 cards agrupam os 7 procedimentos que a Camilla realmente realiza.
+    // Nao acrescentar procedimento que ela nao faz.
     items: [
       {
         number: '01',
-        title: '[PLACEHOLDER] Odontologia estetica',
+        title: 'Desenho do sorriso',
         summary:
-          'Procedimentos que devolvem forma, cor e proporcao ao sorriso, sempre partindo de um planejamento digital feito antes de qualquer intervencao.',
-        list: ['Facetas e lentes', 'Clareamento', 'Restauracoes em resina', 'Planejamento digital do sorriso'],
+          'Lentes e ajuste de contorno para corrigir forma, cor e proporcao. O desenho e definido antes, junto com voce, e so depois vai para a boca.',
+        list: ['Lentes em porcelana', 'Lentes em resina', 'Gengivoplastia'],
         image: '',
         alt: '',
       },
       {
         number: '02',
-        title: '[PLACEHOLDER] Reabilitacao oral',
+        title: 'Clareamento',
         summary:
-          'Recuperacao da funcao de mastigar e falar com conforto, com proteses e coroas planejadas caso a caso.',
-        list: ['Coroas e proteses', 'Implantes', 'Protese sobre implante', 'Reabilitacao completa'],
+          'Dois caminhos para clarear, escolhidos conforme a causa do escurecimento, a sensibilidade dos seus dentes e a sua rotina.',
+        list: ['Clareamento de consultorio', 'Clareamento caseiro supervisionado'],
         image: '',
         alt: '',
       },
       {
         number: '03',
-        title: '[PLACEHOLDER] Prevencao e manutencao',
+        title: 'Saude e manutencao',
         summary:
-          'O acompanhamento que segura o resultado ao longo dos anos: limpeza, controle e ajuste periodico.',
-        list: ['Limpeza e profilaxia', 'Aplicacao de fluor', 'Controle periodico', 'Orientacao de higiene'],
+          'A base que sustenta qualquer resultado estetico ao longo dos anos: gengiva saudavel, dente sem carie e controle periodico.',
+        list: ['Profilaxia', 'Raspagem', 'Restauracoes'],
         image: '',
         alt: '',
       },
       {
         number: '04',
-        title: '[PLACEHOLDER] Urgencia e dor',
+        title: 'Protecao do sorriso',
         summary:
-          'Atendimento para quem chega com dor, sensibilidade ou algo quebrado, com prioridade na agenda do dia.',
-        list: ['Dor de dente', 'Restauracao quebrada', 'Sensibilidade', 'Tratamento de canal'],
+          'Placa feita sob medida para quem aperta ou range os dentes durante o sono, protegendo o esmalte e aliviando a tensao da mandibula.',
+        list: ['Placa para bruxismo'],
         image: '',
         alt: '',
       },
@@ -138,13 +140,14 @@ export const defaults = {
     title: 'O que costuma trazer alguem ate aqui',
     intro:
       'Se voce se reconheceu em algum destes pontos, vale marcar uma avaliacao para entender a causa antes de decidir qualquer tratamento.',
+    // Cada sinal aqui tem correspondencia com um dos tratamentos que ela faz.
     items: [
-      { title: '[PLACEHOLDER] Sensibilidade ao gelado ou ao quente', text: 'Aquele choque rapido ao beber ou comer algo em temperatura diferente.' },
-      { title: '[PLACEHOLDER] Gengiva que sangra na escovacao', text: 'Sangramento frequente costuma ser sinal de inflamacao, nao de escovacao forte demais.' },
-      { title: '[PLACEHOLDER] Dificuldade para mastigar de um lado', text: 'Evitar um lado da boca quase sempre indica um problema que ja esta instalado.' },
-      { title: '[PLACEHOLDER] Dentes escuros ou manchados', text: 'Mudanca de cor pode ser pigmentacao externa ou algo interno ao dente.' },
-      { title: '[PLACEHOLDER] Dor de cabeca e mandibula ao acordar', text: 'Pode estar ligado a apertamento ou ranger de dentes durante o sono.' },
-      { title: '[PLACEHOLDER] Falta de um ou mais dentes', text: 'A ausencia de um dente muda a posicao dos vizinhos com o tempo.' },
+      { title: 'Dentes escuros ou amarelados', text: 'Mudanca de cor pode ser pigmentacao externa, do cafe e do vinho, ou algo interno ao dente. Sao caminhos diferentes.' },
+      { title: 'Gengiva que sangra na escovacao', text: 'Sangramento frequente costuma ser sinal de inflamacao e acumulo de tartaro, nao de escovacao forte demais.' },
+      { title: 'Sorriso que mostra muita gengiva', text: 'Quando o dente parece curto, muitas vezes ele esta apenas coberto. O contorno da gengiva pode ser ajustado.' },
+      { title: 'Dentes lascados, gastos ou tortos', text: 'Pequenas fraturas, desgaste e formas irregulares mudam a proporcao do sorriso inteiro.' },
+      { title: 'Dor de cabeca e mandibula ao acordar', text: 'Pode estar ligado a apertamento ou ranger de dentes durante o sono, que tambem desgasta o esmalte.' },
+      { title: 'Sensibilidade ao gelado ou ao quente', text: 'Aquele choque rapido ao beber ou comer algo em temperatura diferente costuma ter causa identificavel.' },
     ],
   },
 
@@ -172,7 +175,7 @@ export const defaults = {
   consultorio: {
     eyebrow: 'O espaco',
     title: 'Sobre o consultorio',
-    text: '[PLACEHOLDER] Descricao do espaco: onde fica, como e o ambiente, o que tem de equipamento, estacionamento, acessibilidade e o que faz a paciente se sentir a vontade.',
+    text: 'O consultorio fica na Enseada do Sua, no Edificio Master Tower, na rua lateral a Assembleia Legislativa, em frente ao Tribunal de Contas e a poucos minutos do Shopping Vitoria. [PLACEHOLDER] Completar com a descricao do ambiente e dos equipamentos.',
     gallery: [
       { image: '', alt: '[PLACEHOLDER] Recepcao' },
       { image: '', alt: '[PLACEHOLDER] Sala de atendimento' },
@@ -180,11 +183,11 @@ export const defaults = {
       { image: '', alt: '[PLACEHOLDER] Detalhe do espaco' },
     ],
     diferenciais: [
-      { title: '[PLACEHOLDER] Estacionamento', text: 'Vaga no local ou proximo.' },
-      { title: '[PLACEHOLDER] Acessibilidade', text: 'Acesso por elevador.' },
-      { title: '[PLACEHOLDER] Biosseguranca', text: 'Esterilizacao com controle e material de uso unico.' },
+      { title: 'Facil de achar', text: 'Na rua lateral a Assembleia Legislativa, em frente ao Tribunal de Contas.' },
+      { title: '[PLACEHOLDER] Estacionamento', text: 'Confirmar se o Master Tower tem estacionamento para visitantes ou conveniado.' },
+      { title: 'Biosseguranca', text: 'Esterilizacao com controle e material de uso unico em todos os atendimentos.' },
     ],
-    ctaMaps: { label: 'Como chegar', href: '' },
+    ctaMaps: { label: 'Como chegar', href: 'https://maps.google.com/?q=Rua+Jose+Alexandre+Buaiz,+190,+Enseada+do+Sua,+Vitoria+ES' },
   },
 
   // ----------------------------------------------------------- DEPOIMENTOS
@@ -211,7 +214,7 @@ export const defaults = {
       { q: 'Preciso levar algum exame?', a: '[PLACEHOLDER] Dizer se e preciso levar radiografia, documentacao ou nada.' },
       { q: 'Atende convenio?', a: '[PLACEHOLDER] Listar convenios atendidos, ou informar que o atendimento e particular com nota fiscal para reembolso.' },
       { q: 'Quanto tempo dura o atendimento?', a: '[PLACEHOLDER] Tempo medio da consulta e como a agenda e organizada.' },
-      { q: 'Tem estacionamento?', a: '[PLACEHOLDER] Informacao sobre estacionamento e acesso.' },
+      { q: 'Como chego ate ai?', a: 'O consultorio fica na sala 714 do Edificio Master Tower, na rua lateral a Assembleia Legislativa e em frente ao Tribunal de Contas, perto do Shopping Vitoria. [PLACEHOLDER] Completar com estacionamento e acesso ao predio.' },
       { q: 'Atende aos sabados?', a: '[PLACEHOLDER] Horarios e dias de atendimento.' },
       { q: 'E se eu sentir medo de dentista?', a: '[PLACEHOLDER] Como o consultorio lida com pacientes ansiosos: ritmo, pausas, explicacao de cada passo.' },
     ],
@@ -230,10 +233,11 @@ export const defaults = {
     formEnabled: true,
     interesses: [
       'Nao sei ainda, quero uma avaliacao',
-      'Odontologia estetica',
-      'Reabilitacao oral',
-      'Prevencao e limpeza',
-      'Estou com dor',
+      'Lentes em porcelana ou resina',
+      'Clareamento',
+      'Limpeza, raspagem ou restauracao',
+      'Gengivoplastia',
+      'Placa para bruxismo',
     ],
     successMessage: 'Recebemos sua mensagem. A gente entra em contato em breve.',
   },
@@ -241,16 +245,16 @@ export const defaults = {
   // ----------------------------------------------------------------- RODAPE
   footer: {
     logoText: 'Dra. Camilla Barros',
-    tagline: 'Odontologia em Vitoria, ES',
+    tagline: 'Odontologia na Enseada do Sua, Vitoria ES',
     endereco: {
-      street: '[PLACEHOLDER] Rua Exemplo, 000',
-      complement: '[PLACEHOLDER] Sala 00',
-      district: '[PLACEHOLDER] Bairro',
+      street: 'Rua Jose Alexandre Buaiz, 190',
+      complement: 'Sala 714, Edificio Master Tower',
+      district: 'Enseada do Sua',
       city: 'Vitoria',
       state: 'ES',
-      cep: '[PLACEHOLDER] 29000-000',
+      cep: '29050-918',
       mapsEmbed: '',
-      mapsLink: '',
+      mapsLink: 'https://maps.google.com/?q=Rua+Jose+Alexandre+Buaiz,+190,+Enseada+do+Sua,+Vitoria+ES',
     },
     horarios: [
       { day: 'Segunda a sexta', hours: '[PLACEHOLDER] 08h as 18h' },
