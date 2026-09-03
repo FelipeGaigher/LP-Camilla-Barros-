@@ -56,11 +56,23 @@ Nada de preço, parcelamento ou "a partir de". Anúncio de valor é proibido.
 
 ## Bloco 5, sobre ela
 
-- [ ] Onde se formou e em que ano
-- [ ] Cursos, especializações e atualizações relevantes (com instituição e ano)
-- [ ] Por que escolheu odontologia, e por que a área em que atua
-- [ ] Como ela conduz a consulta, o que o paciente pode esperar
-- [ ] Uma frase que resuma o jeito dela de atender
+Já recebido: graduação no Centro Universitário Tocantinense Presidente Antônio
+Carlos (UNITPAC, Araguaína/TO); em formação em Dentística Estética com ênfase em
+Prótese; curso de Lentes em Resina com a Dra. Juliana Pereira (São Paulo); curso
+de Laminados na clínica do Dr. Adolfo Martins (Vitória/ES).
+
+- [x] ~~Onde se formou~~ UNITPAC. **Falta o ano de formatura.**
+- [x] ~~Cursos e atualizações~~ recebidos. **Faltam os anos de cada um.**
+- [ ] A pós em Dentística está em andamento ou já concluída? Se concluída, quando?
+- [ ] Por que escolheu odontologia, e por que a estética
+- [ ] Como ela conduz a consulta, o que a paciente pode esperar
+- [ ] Ler e aprovar o texto que já está no ar como rascunho na seção "Sobre"
+
+**Atenção jurídica.** "Graduanda" quer dizer curso em andamento, e pós-graduação,
+mesmo concluída, não é título de especialista. Enquanto ela não tiver especialidade
+registrada no CRO, o site não pode escrever "especialista em dentística" nem
+"especialista em prótese". Por isso a formação aparece listada como "em andamento"
+e a linha de atuação diz "atuação em odontologia estética e preventiva".
 
 ## Bloco 6, fotos
 

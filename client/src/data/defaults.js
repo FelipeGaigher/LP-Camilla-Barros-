@@ -155,18 +155,23 @@ export const defaults = {
   sobre: {
     eyebrow: 'Quem vai te atender',
     title: 'Sobre a Dra. Camilla',
-    lead: '[PLACEHOLDER] Frase de apresentacao em uma linha, que resume o jeito dela de atender.',
+    // RASCUNHO a partir do perfil que a Camilla enviou. Ela precisa ler e
+    // aprovar antes de publicar, principalmente o terceiro paragrafo.
+    lead: 'Odontologia estetica feita com calma, com o desenho definido antes de encostar em qualquer dente.',
     paragraphs: [
-      '[PLACEHOLDER] Paragrafo 1: formacao, onde se graduou, ano, e o caminho ate abrir o consultorio.',
-      '[PLACEHOLDER] Paragrafo 2: cursos, atualizacoes e areas em que atua hoje.',
-      '[PLACEHOLDER] Paragrafo 3: como ela conduz a consulta e o que a paciente pode esperar do atendimento.',
+      'Formada em Odontologia pelo Centro Universitario Tocantinense Presidente Antonio Carlos, em Araguaina, [PLACEHOLDER: ano de formatura], a Camilla escolheu a estetica como caminho desde cedo e hoje atende em consultorio proprio na Enseada do Sua, em Vitoria.',
+      'Segue em formacao em Dentistica Estetica com enfase em Protese e se especializou em lentes por dois caminhos complementares: o curso de Lentes em Resina com a Dra. Juliana Pereira, em Sao Paulo, e o curso de Laminados na clinica do Dr. Adolfo Martins, aqui em Vitoria. E o que sustenta o trabalho com lentes em resina e em porcelana no consultorio.',
+      '[PLACEHOLDER] Terceiro paragrafo, com as palavras dela: como conduz a consulta, o ritmo do atendimento e o que a paciente pode esperar desde a primeira conversa.',
     ],
     image: '',
-    alt: 'Dra. Camilla',
+    alt: 'Dra. Camilla Barros',
+    // ATENCAO: pos-graduacao em andamento nao autoriza anunciar "especialista".
+    // So titulo de especialista registrado no CRO permite esse termo.
     formacao: [
-      { label: '[PLACEHOLDER] Graduacao em Odontologia', detail: 'Instituicao, ano' },
-      { label: '[PLACEHOLDER] Curso de atualizacao', detail: 'Instituicao, ano' },
-      { label: '[PLACEHOLDER] Curso de atualizacao', detail: 'Instituicao, ano' },
+      { label: 'Graduacao em Odontologia', detail: 'Centro Universitario Tocantinense Presidente Antonio Carlos, Araguaina/TO' },
+      { label: 'Dentistica Estetica com enfase em Protese', detail: 'em andamento' },
+      { label: 'Curso de Lentes em Resina', detail: 'Dra. Juliana Pereira, Sao Paulo/SP' },
+      { label: 'Curso de Laminados', detail: 'Clinica Dr. Adolfo Martins, Vitoria/ES' },
     ],
     cta: { label: 'Falar com a Camilla', href: '#contato' },
   },
