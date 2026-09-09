@@ -288,30 +288,46 @@ h1 em, h2 em, .sobre-lead em { font-style: italic; color: var(--blue-deep); }
 
 /* ---- Tratamentos: pilha grudada ---- */
 .stack { position: relative; }
-.stack-item { position: sticky; min-height: 100svh; display: flex; align-items: center; }
+/* A altura do item e o trilho de scroll de cada card. Fica abaixo de uma
+   tela cheia de proposito: com 100svh, quatro tratamentos viravam quatro
+   telas de rolagem e a secao ficava arrastada. */
+.stack-item { position: sticky; min-height: min(78svh, 40rem); display: flex; align-items: center; padding-block: .75rem; }
 .stack-card {
   width: 100%; display: grid; grid-template-columns: 1.05fr 1fr;
-  min-height: clamp(23rem, 58vh, 32rem);
+  /* Altura fixa, nao minima: com alturas diferentes a pilha fica torta e
+     o card de tras aparece como uma sobra irregular. */
+  height: clamp(20rem, 54svh, 27rem);
   border: 1px solid var(--line); border-radius: 26px; overflow: hidden;
   background: var(--sand-00);
   box-shadow: 0 26px 60px -34px rgba(63, 52, 44, .55);
   transform-origin: top center;
   will-change: transform;
 }
-.stack-body { padding: clamp(1.9rem, 3.6vw, 3.2rem); display: flex; flex-direction: column; justify-content: center; }
+.stack-body { padding: clamp(1.75rem, 3vw, 2.9rem); display: flex; flex-direction: column; justify-content: center; min-width: 0; }
 .stack-step { font-size: var(--fs-label); letter-spacing: .15em; text-transform: uppercase; color: var(--blue-deep); margin-bottom: 1rem; font-weight: 500; }
 .stack-body h3 { font-size: clamp(1.45rem, 2.3vw, 2rem); margin-bottom: .95rem; }
-.stack-body > p { color: var(--brown-soft); max-width: 34ch; font-weight: 300; }
+.stack-body > p { color: var(--brown-soft); max-width: 38ch; font-weight: 300; }
 .stack-list { margin-top: 1.5rem; display: grid; gap: .5rem; }
 .stack-list li { display: flex; align-items: center; gap: .7rem; font-size: var(--fs-small); color: var(--muted); }
 .stack-list li::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: var(--blue); flex: none; }
 .stack-media { position: relative; background: var(--sand-20); overflow: hidden; }
 
-@media (max-width: 900px) {
+/* Entre 1024 e 1180px as duas colunas ficam apertadas demais para o texto
+   respirar, entao o corte para uma coluna sobe para 1024. */
+@media (max-width: 1024px) {
   .stack { display: grid; gap: 1.15rem; }
-  .stack-item { position: static; min-height: 0; }
-  .stack-card { grid-template-columns: 1fr; min-height: 0; transform: none !important; }
-  .stack-media { aspect-ratio: 16/10; order: -1; }
+  .stack-item { position: static; min-height: 0; padding-block: 0; }
+  .stack-card { grid-template-columns: 1fr; height: auto; transform: none !important; }
+  .stack-media { aspect-ratio: 16/9; order: -1; }
+  .stack-body > p { max-width: none; }
+}
+
+/* Notebook de tela baixa: sem isso o card nao cabia inteiro na tela. */
+@media (min-width: 1025px) and (max-height: 720px) {
+  .stack-item { min-height: 92svh; }
+  .stack-card { height: 78svh; }
+  .stack-body { padding-block: 1.3rem; }
+  .stack-body > p { font-size: .86rem; }
 }
 
 /* ---- Sinais ---- */
@@ -1017,9 +1033,9 @@ body.js .rv:not(.in) { opacity: 0; transform: translateY(24px); }
   var stackOn = false;
 
   function layoutStack() {
-    stackOn = window.matchMedia('(min-width: 901px)').matches && !reduce;
+    stackOn = window.matchMedia('(min-width: 1025px)').matches && !reduce;
     items.forEach(function (item, i) {
-      item.style.top = stackOn ? 'calc(6rem + ' + (i * 18) + 'px)' : '';
+      item.style.top = stackOn ? 'calc(5.5rem + ' + (i * 22) + 'px)' : '';
       if (!stackOn) {
         var c = item.querySelector('.stack-card');
         c.style.transform = '';
@@ -1038,10 +1054,10 @@ body.js .rv:not(.in) { opacity: 0; transform: translateY(24px); }
     if (!stackOn) return;
     var rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
     items.forEach(function (item, i) {
-      var stickTop = 6 * rem + i * 18;
+      var stickTop = 5.5 * rem + i * 22;
       var rect = item.getBoundingClientRect();
       var p = Math.min(1, Math.max(0, (stickTop - rect.top) / Math.max(1, rect.height)));
-      var target = 1 - (total - i) * 0.035;
+      var target = 1 - (total - i) * 0.028;
       var card = item.querySelector('.stack-card');
       card.style.transform = 'scale(' + (1 - (1 - target) * p).toFixed(4) + ')';
       card.style.opacity = (1 - 0.26 * Math.max(0, p - 0.85) / 0.15).toFixed(3);

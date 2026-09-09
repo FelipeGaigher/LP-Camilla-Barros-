@@ -42,7 +42,7 @@ export default function Tratamentos() {
 
 /** No celular a pilha vira uma lista simples: empilhar em tela pequena
  *  esconde conteudo em vez de organizar. */
-function useIsNarrow(query = '(max-width: 900px)') {
+function useIsNarrow(query = '(max-width: 1024px)') {
   const [narrow, setNarrow] = useState(() =>
     typeof window !== 'undefined' ? window.matchMedia(query).matches : false
   )
@@ -70,7 +70,7 @@ function StackCard({ item, index, total }) {
 
   // Saida: com o card ja grudado no topo, o proximo sobe por cima e este
   // encolhe. Quanto mais antigo o card, menor ele fica no fim da pilha.
-  const targetScale = 1 - (total - index) * 0.035
+  const targetScale = 1 - (total - index) * 0.028
   const { scrollYProgress: exitProgress } = useScroll({
     target: ref,
     offset: ['start start', 'end start'],
@@ -85,7 +85,7 @@ function StackCard({ item, index, total }) {
     <div
       className="stack__item"
       ref={ref}
-      style={stacked ? { top: `calc(6rem + ${index * 18}px)` } : undefined}
+      style={stacked ? { top: `calc(5.5rem + ${index * 22}px)` } : undefined}
     >
       <motion.article className="stack__card" style={style}>
         <div className="stack__body">
