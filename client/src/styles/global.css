@@ -79,7 +79,15 @@
 
 /* ---- Reset ---- */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
-html { font-size: 16px; scroll-behavior: auto; -webkit-text-size-adjust: 100%; }
+/* overflow-x: clip, nunca hidden no body. `hidden` no body faz o body virar
+   contexto de rolagem, o que prende o gesto de toque no mobile e quebra o
+   position: sticky dos cards. `clip` corta o estouro sem criar contexto. */
+html {
+  font-size: 16px;
+  scroll-behavior: auto;
+  -webkit-text-size-adjust: 100%;
+  overflow-x: clip;
+}
 body {
   font-family: var(--font-body);
   font-size: var(--fs-body);
@@ -89,7 +97,7 @@ body {
   background: var(--cream);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 img, video { max-width: 100%; display: block; }
 button, input, textarea, select { font: inherit; color: inherit; }
@@ -584,6 +592,24 @@ h3 { font-size: var(--fs-h3); letter-spacing: -0.01em; line-height: 1.15; }
   .stack__card { grid-template-columns: 1fr; height: auto; }
   .stack__media { aspect-ratio: 16 / 9; order: -1; }
   .stack__summary { max-width: none; }
+}
+
+/* Desempenho no mobile. Duas coisas travam o scroll em celular e nao
+   aparecem no desktop:
+   1. backdrop-filter num elemento fixo de largura total, recalculado a cada
+      quadro enquanto a pagina rola. Em tela pequena vira fundo solido.
+   2. will-change: transform em varios cards ao mesmo tempo, que promove uma
+      camada de composicao para cada um. A pilha nem roda no mobile. */
+@media (max-width: 1024px) {
+  .nav.is-scrolled {
+    background: var(--cream);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .stack__card { will-change: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav.is-scrolled { backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 
 /* Tela baixa (notebook de 13" com a barra do navegador): sem isso o card
