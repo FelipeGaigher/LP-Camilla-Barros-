@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useSiteData } from '../context/SiteDataContext'
 import Reveal from './Reveal'
+import EditableText from './editable/EditableText'
 
 export default function Faq() {
   const { data } = useSiteData()
@@ -14,8 +15,8 @@ export default function Faq() {
     <section id="faq" className="section section--surface">
       <div className="container faq__grid">
         <Reveal>
-          <span className="eyebrow">{f.eyebrow}</span>
-          <h2 style={{ marginTop: '1.25rem' }}>{f.title}</h2>
+          <EditableText path="faq.eyebrow" className="eyebrow" />
+          <EditableText as="h2" path="faq.title" style={{ marginTop: '1.25rem' }} />
         </Reveal>
 
         <Reveal className="faq__list" delay={0.08}>
@@ -29,7 +30,7 @@ export default function Faq() {
                   aria-expanded={isOpen}
                   aria-controls={`faq-a-${i}`}
                 >
-                  {item.q}
+                  <EditableText path={`faq.items.${i}.q`} />
                   <span className="faq__icon" aria-hidden="true" />
                 </button>
                 <AnimatePresence initial={false}>
@@ -42,7 +43,7 @@ export default function Faq() {
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.4, ease: [0.33, 1, 0.68, 1] }}
                     >
-                      <p>{item.a}</p>
+                      <EditableText as="p" path={`faq.items.${i}.a`} multiline />
                     </motion.div>
                   )}
                 </AnimatePresence>

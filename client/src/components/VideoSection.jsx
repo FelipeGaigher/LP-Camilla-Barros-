@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useSiteData } from '../context/SiteDataContext'
 import Reveal from './Reveal'
+import EditableText from './editable/EditableText'
 
 function embedUrl(url) {
   if (!url) return null
@@ -23,9 +24,9 @@ export default function VideoSection() {
     <section id="video" className="section">
       <div className="container videosec__grid">
         <Reveal>
-          <span className="eyebrow">{v.eyebrow}</span>
-          <h2 style={{ marginTop: '1.25rem' }}>{v.title}</h2>
-          <p className="lead" style={{ marginTop: '1.5rem' }}>{v.text}</p>
+          <EditableText path="video.eyebrow" className="eyebrow" />
+          <EditableText as="h2" path="video.title" style={{ marginTop: '1.25rem' }} />
+          <EditableText as="p" path="video.text" className="lead" style={{ marginTop: '1.5rem' }} multiline />
         </Reveal>
 
         <Reveal delay={0.1}>
@@ -65,7 +66,7 @@ export default function VideoSection() {
               </button>
             )}
           </div>
-          {v.caption && <p className="videosec__caption">{v.caption}</p>}
+          <EditableText as="p" path="video.caption" className="videosec__caption" />
         </Reveal>
       </div>
     </section>

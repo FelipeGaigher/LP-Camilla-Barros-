@@ -1,6 +1,7 @@
 import { useSiteData } from '../context/SiteDataContext'
 import Reveal, { RevealGroup, RevealItem } from './Reveal'
 import { scrollToAnchor } from './SmoothScroll'
+import EditableText from './editable/EditableText'
 
 export default function Sintomas() {
   const { data } = useSiteData()
@@ -12,17 +13,17 @@ export default function Sintomas() {
     <section id="sintomas" className="section">
       <div className="container">
         <Reveal className="section-head">
-          <span className="eyebrow">{s.eyebrow}</span>
-          <h2>{s.title}</h2>
-          {s.intro && <p className="lead">{s.intro}</p>}
+          <EditableText path="sintomas.eyebrow" className="eyebrow" />
+          <EditableText as="h2" path="sintomas.title" />
+          <EditableText as="p" path="sintomas.intro" className="lead" multiline />
         </Reveal>
 
         <RevealGroup className="sintomas__grid" stagger={0.06}>
           {s.items?.map((item, i) => (
             <RevealItem className="sintoma" key={i} y={18}>
               <span className="sintoma__index">{String(i + 1).padStart(2, '0')}</span>
-              <h3>{item.title}</h3>
-              <p>{item.text}</p>
+              <EditableText as="h3" path={`sintomas.items.${i}.title`} />
+              <EditableText as="p" path={`sintomas.items.${i}.text`} multiline />
             </RevealItem>
           ))}
         </RevealGroup>

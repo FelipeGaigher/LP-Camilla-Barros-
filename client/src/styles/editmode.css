@@ -1,0 +1,199 @@
+/* ==========================================================================
+   Modo de edicao inline
+   Nada aqui aparece para o visitante: tudo depende da classe .editmode-active
+   no body, que so entra com a Camilla logada e o modo ligado.
+   ========================================================================== */
+
+/* ---- Campo editavel ---- */
+.editable {
+  outline: 1px dashed var(--accent-line);
+  outline-offset: 3px;
+  border-radius: 3px;
+  cursor: text;
+  transition: outline-color 0.2s var(--ease-out-quart), background 0.2s var(--ease-out-quart);
+  min-width: 2ch;
+}
+.editable:hover { outline-color: var(--accent); background: var(--accent-tint); }
+.editable:focus {
+  outline: 2px solid var(--accent);
+  background: var(--white);
+}
+.editable:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted-light);
+  font-style: italic;
+}
+
+/* ---- Imagem trocavel ---- */
+.editable-img { display: contents; }
+.editable-img--on {
+  display: block;
+  position: relative;
+  outline: 1px dashed var(--accent-line);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.editable-img--on:hover { outline-color: var(--accent); }
+.editable-img__btn {
+  position: absolute;
+  left: 50%;
+  bottom: 0.75rem;
+  transform: translateX(-50%);
+  padding: 0.5rem 0.95rem;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 0.78rem;
+  font-weight: 500;
+  white-space: nowrap;
+  box-shadow: 0 10px 24px -14px rgba(17, 17, 17, 0.9);
+  z-index: 3;
+}
+.editable-img__btn:disabled { opacity: 0.7; cursor: progress; }
+.editable-img__clear {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 1rem;
+  line-height: 1;
+  z-index: 3;
+}
+.editable-img__erro {
+  position: absolute;
+  left: 50%;
+  bottom: -1.6rem;
+  transform: translateX(-50%);
+  font-size: 0.75rem;
+  color: var(--error);
+  white-space: nowrap;
+}
+
+/* ---- Botao flutuante (modo desligado) ---- */
+.edit-fab {
+  position: fixed;
+  left: clamp(1rem, 2.6vw, 1.8rem);
+  bottom: clamp(1rem, 2.6vw, 1.8rem);
+  z-index: 880;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1.1rem;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 0.82rem;
+  font-weight: 500;
+  box-shadow: 0 14px 32px -18px rgba(17, 17, 17, 0.9);
+}
+
+/* ---- Barra (modo ligado) ---- */
+.edit-bar {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(1rem, 2.6vw, 1.5rem);
+  transform: translateX(-50%);
+  z-index: 890;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.85rem 0.7rem 1.1rem;
+  border-radius: var(--radius-pill);
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 0.84rem;
+  box-shadow: 0 20px 44px -20px rgba(17, 17, 17, 0.85);
+  max-width: calc(100vw - 2rem);
+}
+.edit-bar__main { display: flex; align-items: center; gap: 0.55rem; }
+.edit-bar__status { color: rgba(242, 241, 237, 0.6); font-size: 0.78rem; }
+.edit-bar__dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--accent-soft); flex: none; }
+.edit-bar__dot.is-dirty { background: #d8a13f; }
+.edit-bar__dot.is-saving { background: var(--accent-soft); animation: editPulse 1s ease-in-out infinite; }
+.edit-bar__dot.is-saved { background: #7fae72; }
+.edit-bar__dot.is-error { background: var(--error); }
+@keyframes editPulse { 50% { opacity: 0.35; } }
+
+.edit-bar__count {
+  padding: 0.28rem 0.7rem;
+  border-radius: var(--radius-pill);
+  background: rgba(242, 241, 237, 0.14);
+  color: inherit;
+  font-size: 0.76rem;
+}
+.edit-bar__count:hover { background: rgba(242, 241, 237, 0.24); }
+
+.edit-bar__actions { display: flex; align-items: center; gap: 0.4rem; }
+.edit-bar__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(242, 241, 237, 0.24);
+  color: inherit;
+  font-size: 0.8rem;
+  transition: background 0.18s, border-color 0.18s, opacity 0.18s;
+}
+.edit-bar__btn:hover { background: rgba(242, 241, 237, 0.12); }
+.edit-bar__btn--primary { background: var(--accent); border-color: var(--accent); }
+.edit-bar__btn--primary:hover { background: var(--accent-ink); }
+.edit-bar__btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.edit-bar kbd {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 0.66rem;
+  padding: 0.1rem 0.32rem;
+  border-radius: 4px;
+  background: rgba(242, 241, 237, 0.16);
+}
+.edit-fab kbd {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 0.66rem;
+  padding: 0.1rem 0.34rem;
+  border-radius: 4px;
+  background: rgba(242, 241, 237, 0.18);
+}
+
+.edit-bar__list {
+  flex-basis: 100%;
+  max-height: 11rem;
+  overflow-y: auto;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.6rem 0.3rem 0.2rem;
+  border-top: 1px solid rgba(242, 241, 237, 0.16);
+  font-size: 0.76rem;
+  color: rgba(242, 241, 237, 0.78);
+}
+
+@media (max-width: 640px) {
+  .edit-bar { flex-direction: column; align-items: stretch; border-radius: var(--radius-lg); }
+  .edit-bar__actions { justify-content: space-between; }
+}
+
+/* ==========================================================================
+   Preview do painel
+   O corpo dentro do iframe recebe .cms-preview-body: e o que liga o
+   click-to-edit sem vazar essa affordance para o site publico.
+   ========================================================================== */
+.cms-preview-body [data-cms-path] {
+  cursor: pointer;
+  transition: outline-color 0.15s;
+  outline: 1px solid transparent;
+  outline-offset: 2px;
+}
+.cms-preview-body [data-cms-path]:hover {
+  outline-color: var(--accent);
+  background: var(--accent-tint);
+  border-radius: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edit-bar__dot.is-saving { animation: none; }
+}

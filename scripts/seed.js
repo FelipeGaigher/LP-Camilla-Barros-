@@ -24,7 +24,7 @@ async function run() {
   for (const [key, value] of Object.entries(defaults)) {
     await sql`
       INSERT INTO site_sections (section_key, data, updated_at)
-      VALUES (${key}, ${JSON.stringify(value)}::jsonb, NOW())
+      VALUES (${key}, ${sql.json(value)}, NOW())
       ON CONFLICT (section_key) DO NOTHING
     `
     console.log(`[ok] secao "${key}" semeada`)

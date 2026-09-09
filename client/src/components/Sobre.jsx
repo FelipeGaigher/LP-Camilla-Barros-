@@ -1,6 +1,8 @@
 import { useSiteData } from '../context/SiteDataContext'
 import Reveal from './Reveal'
 import { scrollToAnchor } from './SmoothScroll'
+import EditableText from './editable/EditableText'
+import EditableImage from './editable/EditableImage'
 
 export default function Sobre() {
   const { data } = useSiteData()
@@ -11,23 +13,19 @@ export default function Sobre() {
     <section id="sobre" className="section section--surface">
       <div className="container sobre__grid">
         <Reveal className="sobre__portrait">
-          {s.image ? (
-            <img src={s.image} alt={s.alt || s.title} loading="lazy" />
-          ) : (
-            <div className="placeholder-box">Retrato da Dra. Camilla</div>
-          )}
+          <EditableImage path="sobre.image" alt={s.alt || s.title} placeholder="Retrato da Dra. Camilla" loading="lazy" />
         </Reveal>
 
         <div>
           <Reveal>
-            <span className="eyebrow">{s.eyebrow}</span>
-            <h2 style={{ marginTop: '1.25rem' }}>{s.title}</h2>
-            {s.lead && <p className="sobre__lead">{s.lead}</p>}
+            <EditableText path="sobre.eyebrow" className="eyebrow" />
+            <EditableText as="h2" path="sobre.title" style={{ marginTop: '1.25rem' }} />
+            <EditableText as="p" path="sobre.lead" className="sobre__lead" multiline />
           </Reveal>
 
           <Reveal className="sobre__text" delay={0.08}>
             {s.paragraphs?.map((p, i) => (
-              <p key={i}>{p}</p>
+              <EditableText as="p" key={i} path={`sobre.paragraphs.${i}`} multiline />
             ))}
           </Reveal>
 
@@ -36,8 +34,8 @@ export default function Sobre() {
               <ul className="sobre__formacao">
                 {s.formacao.map((f, i) => (
                   <li key={i}>
-                    <span>{f.label}</span>
-                    <span>{f.detail}</span>
+                    <EditableText path={`sobre.formacao.${i}.label`} />
+                    <EditableText path={`sobre.formacao.${i}.detail`} />
                   </li>
                 ))}
               </ul>

@@ -64,6 +64,29 @@ client/
 
 ## Como o CMS funciona
 
+Duas formas de editar, com a mesma fonte de verdade:
+
+**Inline, no próprio site.** Logada, a Camilla vê um botão "Editar o site" (ou
+tecla `E`). Ligado, cada texto vira editável no lugar onde aparece e as fotos
+viram botão de upload. As alterações ficam num buffer até ela clicar em Salvar
+(`Ctrl+S`), e só então são agrupadas por seção e gravadas de uma vez, o que evita
+uma requisição por tecla digitada. Sair da página sem salvar dispara aviso.
+
+**Painel em `/admin`, com prévia ao lado.** O editor fica à esquerda e o site de
+verdade à direita, dentro de um iframe, renderizando o rascunho antes de gravar.
+Como é um iframe, as media queries respondem à largura escolhida, então dá para
+conferir o celular sem sair do painel. Clicar num texto da prévia abre a seção
+certa e rola até o campo.
+
+O padrão veio do NovaES (`EditModeContext`, `EditableText`, `IframePortal`), com
+uma diferença: lá os rótulos de cada caminho são mantidos numa lista à mão; aqui
+saem do próprio `schema.js` via `lib/pathLabels.js`, então campo novo já nasce com
+rótulo e nada fica desatualizado sem ninguém perceber.
+
+Desligar o inline: `VITE_ENABLE_INLINE_CMS=false` no build. Sobra o painel.
+
+### Arquitetura de dados
+
 Cada seção é uma linha em `site_sections`, com o conteúdo inteiro em JSONB.
 O front carrega tudo de uma vez em `GET /api/sections` no boot, guarda no
 `localStorage` como cache, e cai no `defaults.js` se a API estiver fora. Ou seja,

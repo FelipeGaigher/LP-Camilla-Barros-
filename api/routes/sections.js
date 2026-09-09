@@ -47,11 +47,13 @@ router.put('/:key', authGuard, async (req, res) => {
       if (old.length > 0) oldData = old[0].data
     } catch {}
 
+    // sql.json e obrigatorio aqui: o driver ja serializa JSON sozinho, entao
+    // passar JSON.stringify gravava o objeto como uma string dentro do jsonb.
     await sql`
       INSERT INTO site_sections (section_key, data, updated_at)
-      VALUES (${key}, ${JSON.stringify(data)}::jsonb, NOW())
+      VALUES (${key}, ${sql.json(data)}, NOW())
       ON CONFLICT (section_key)
-      DO UPDATE SET data = ${JSON.stringify(data)}::jsonb, updated_at = NOW()
+      DO UPDATE SET data = ${sql.json(data)}, updated_at = NOW()
     `
 
     logAudit(sql, {

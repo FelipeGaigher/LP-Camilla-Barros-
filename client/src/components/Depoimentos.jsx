@@ -1,5 +1,6 @@
 import { useSiteData } from '../context/SiteDataContext'
 import Reveal, { RevealGroup, RevealItem } from './Reveal'
+import EditableText from './editable/EditableText'
 
 /**
  * COMPLIANCE: os depoimentos aqui devem falar da EXPERIENCIA de atendimento
@@ -17,18 +18,18 @@ export default function Depoimentos() {
     <section id="depoimentos" className="section section--dark">
       <div className="container">
         <Reveal className="section-head">
-          <span className="eyebrow">{d.eyebrow}</span>
-          <h2>{d.title}</h2>
-          {d.intro && <p className="lead">{d.intro}</p>}
+          <EditableText path="depoimentos.eyebrow" className="eyebrow" />
+          <EditableText as="h2" path="depoimentos.title" />
+          <EditableText as="p" path="depoimentos.intro" className="lead" multiline />
         </Reveal>
 
         <RevealGroup className="depo__grid" stagger={0.09}>
           {d.items.map((item, i) => (
             <RevealItem as="article" className="depo__card" key={i}>
-              <p className="depo__quote">&ldquo;{item.quote}&rdquo;</p>
+              <EditableText as="p" className="depo__quote" path={`depoimentos.items.${i}.quote`} multiline />
               <div className="depo__who">
-                <strong>{item.name}</strong>
-                <span>{item.context}</span>
+                <EditableText as="strong" path={`depoimentos.items.${i}.name`} />
+                <EditableText path={`depoimentos.items.${i}.context`} />
               </div>
             </RevealItem>
           ))}

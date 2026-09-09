@@ -10,8 +10,8 @@ export function logAudit(sql, { sectionKey, action, oldData, newData, userId, us
         VALUES (
           ${sectionKey},
           ${action},
-          ${oldData ? JSON.stringify(oldData) : null},
-          ${newData ? JSON.stringify(newData) : null},
+          ${oldData ? sql.json(oldData) : null},
+          ${newData ? sql.json(newData) : null},
           ${userId || null},
           ${username || null}
         )

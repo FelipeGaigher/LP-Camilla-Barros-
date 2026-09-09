@@ -3,7 +3,8 @@ import { defaults, SECTION_KEYS } from '../data/defaults'
 import { loadAll, saveAll, saveSection as cacheSave, clearSection as cacheClear } from '../data/storage'
 import { fetchAllSections, saveSection as apiSave, resetSection as apiReset } from '../data/api'
 
-const SiteDataContext = createContext(null)
+// Exportado para o preview do painel poder sobrepor os dados sem salvar.
+export const SiteDataContext = createContext(null)
 
 // Suba este numero sempre que a estrutura do defaults mudar de forma
 // incompativel: o cache local do visitante e descartado automaticamente.

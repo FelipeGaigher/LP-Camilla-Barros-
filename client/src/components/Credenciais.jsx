@@ -1,5 +1,6 @@
 import { useSiteData } from '../context/SiteDataContext'
 import Reveal, { RevealGroup, RevealItem } from './Reveal'
+import EditableText from './editable/EditableText'
 
 /**
  * Faixa logo abaixo do hero com nome, CRO e os tres valores da clinica.
@@ -13,19 +14,19 @@ export default function Credenciais() {
     <section className="section section--tight cred">
       <div className="container">
         <Reveal className="cred__top">
-          <span className="cred__name">{c.name}</span>
+          <EditableText path="credenciais.name" className="cred__name" />
           <div className="cred__meta">
-            <span>{c.role}</span>
-            <span>{c.cro}</span>
-            {c.atuacao && <span>{c.atuacao}</span>}
+            <EditableText path="credenciais.role" />
+            <EditableText path="credenciais.cro" />
+            <EditableText path="credenciais.atuacao" />
           </div>
         </Reveal>
 
         <RevealGroup className="cred__values">
           {c.valores?.map((v, i) => (
             <RevealItem className="cred__value" key={i}>
-              <h3>{v.title}</h3>
-              <p>{v.text}</p>
+              <EditableText as="h3" path={`credenciais.valores.${i}.title`} />
+              <EditableText as="p" path={`credenciais.valores.${i}.text`} multiline />
             </RevealItem>
           ))}
         </RevealGroup>

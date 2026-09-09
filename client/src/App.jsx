@@ -1,14 +1,17 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { SiteDataProvider, useSiteData } from './context/SiteDataContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { EditModeProvider } from './context/EditModeContext'
 import SmoothScroll from './components/SmoothScroll'
 import SeoHead from './components/SeoHead'
 import { Grain, LoadingScreen } from './components/Chrome'
+import EditToolbar from './components/editable/EditToolbar'
 import HomePage from './pages/HomePage'
 import AdminLogin from './pages/AdminLogin'
 import AdminPanel from './pages/AdminPanel'
 import NotFound from './pages/NotFound'
 import './styles/global.css'
+import './styles/editmode.css'
 
 function Shell() {
   const { data, ready } = useSiteData()
@@ -20,6 +23,7 @@ function Shell() {
       <SmoothScroll enabled={s.smoothScroll} />
       <Grain enabled={s.grain} />
       <LoadingScreen enabled={s.loadingScreen && !ready} label={data.nav.logoText} />
+      <EditToolbar />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/admin/login" element={<AdminLogin />} />
@@ -48,7 +52,9 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <SiteDataProvider>
-          <Shell />
+          <EditModeProvider>
+            <Shell />
+          </EditModeProvider>
         </SiteDataProvider>
       </AuthProvider>
     </BrowserRouter>

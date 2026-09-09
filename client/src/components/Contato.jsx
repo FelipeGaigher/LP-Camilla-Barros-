@@ -3,6 +3,7 @@ import { useSiteData } from '../context/SiteDataContext'
 import { sendLead } from '../data/api'
 import Reveal from './Reveal'
 import { waLink, WhatsAppIcon } from './Chrome'
+import EditableText from './editable/EditableText'
 
 export default function Contato() {
   const { data } = useSiteData()
@@ -37,9 +38,9 @@ export default function Contato() {
       <div className="container contato__grid">
         <div>
           <Reveal>
-            <span className="eyebrow">{c.eyebrow}</span>
-            <h2 style={{ marginTop: '1.25rem' }}>{c.title}</h2>
-            <p className="lead" style={{ marginTop: '1.5rem' }}>{c.text}</p>
+            <EditableText path="contato.eyebrow" className="eyebrow" />
+            <EditableText as="h2" path="contato.title" style={{ marginTop: '1.25rem' }} />
+            <EditableText as="p" path="contato.text" className="lead" style={{ marginTop: '1.5rem' }} multiline />
             {wa && (
               <a className="btn btn--primary" href={wa} target="_blank" rel="noopener noreferrer" style={{ marginTop: '2rem' }}>
                 <WhatsAppIcon size={18} />

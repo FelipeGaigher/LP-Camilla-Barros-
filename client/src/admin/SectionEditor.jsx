@@ -11,7 +11,7 @@ function clone(v) {
  * Editor generico: monta a tela a partir do SCHEMA e mantem um rascunho
  * local. So grava no banco quando a pessoa clica em Salvar.
  */
-export default function SectionEditor({ sectionKey }) {
+export default function SectionEditor({ sectionKey, onDraftChange, focusPath }) {
   const { data, updateSection, resetSection, undoSection, undoAvailable, syncing } = useSiteData()
   const schema = SCHEMA[sectionKey]
   const [draft, setDraft] = useState(() => clone(data[sectionKey]))
@@ -23,6 +23,24 @@ export default function SectionEditor({ sectionKey }) {
     setDirty(false)
     setSaved(false)
   }, [sectionKey])
+
+  // O painel repassa o rascunho para a previa, que renderiza o site com ele.
+  useEffect(() => {
+    onDraftChange?.(sectionKey, draft)
+  }, [sectionKey, draft, onDraftChange])
+
+  // Clique na previa: rola ate o campo e pisca para a pessoa achar o cursor.
+  useEffect(() => {
+    if (!focusPath) return
+    const alvo = document.querySelector(`[data-field-path="${focusPath}"]`)
+    if (!alvo) return
+    alvo.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    alvo.classList.add('is-focado')
+    const campo = alvo.querySelector('input, textarea, select, [contenteditable]')
+    campo?.focus?.()
+    const t = setTimeout(() => alvo.classList.remove('is-focado'), 1600)
+    return () => clearTimeout(t)
+  }, [focusPath])
 
   if (!schema) return <p>Secao sem editor configurado.</p>
 
@@ -77,6 +95,7 @@ export default function SectionEditor({ sectionKey }) {
           <FieldNode
             key={def.key}
             def={def}
+            path={`${sectionKey}.${def.key}`}
             value={draft?.[def.key]}
             onChange={(v) => setField(def.key, v)}
           />
@@ -94,15 +113,16 @@ export default function SectionEditor({ sectionKey }) {
 }
 
 /** Resolve os tipos compostos (group e list) e delega o resto ao Field. */
-function FieldNode({ def, value, onChange }) {
+function FieldNode({ def, value, onChange, path }) {
   if (def.type === 'group') {
     return (
-      <fieldset className="a-group">
+      <fieldset className="a-group" data-field-path={path}>
         <legend>{def.label}</legend>
         {def.fields.map((sub) => (
           <FieldNode
             key={sub.key}
             def={sub}
+            path={`${path}.${sub.key}`}
             value={value?.[sub.key]}
             onChange={(v) => onChange({ ...(value || {}), [sub.key]: v })}
           />
@@ -131,7 +151,7 @@ function FieldNode({ def, value, onChange }) {
     }
 
     return (
-      <div className="a-list">
+      <div className="a-list" data-field-path={path}>
         <div className="a-list__head">
           <h2>{def.label}</h2>
           <button type="button" className="a-btn a-btn--sm" onClick={() => onChange([...items, emptyItem])}>
@@ -143,7 +163,7 @@ function FieldNode({ def, value, onChange }) {
         {items.length === 0 && <p className="a-hint">Nenhum item ainda.</p>}
 
         {items.map((item, i) => (
-          <div className="a-card" key={i}>
+          <div className="a-card" key={i} data-field-path={`${path}.${i}`}>
             <div className="a-card__head">
               <strong>
                 {item?.title || item?.q || item?.label || item?.name || item?.day || item?.alt || `Item ${i + 1}`}
@@ -159,6 +179,7 @@ function FieldNode({ def, value, onChange }) {
                 <FieldNode
                   key={sub.key}
                   def={sub}
+                  path={`${path}.${i}.${sub.key}`}
                   value={item?.[sub.key]}
                   onChange={(v) => setItem(i, { ...(item || {}), [sub.key]: v })}
                 />
@@ -170,5 +191,9 @@ function FieldNode({ def, value, onChange }) {
     )
   }
 
-  return <Field def={def} value={value} onChange={onChange} />
+  return (
+    <div data-field-path={path}>
+      <Field def={def} value={value} onChange={onChange} />
+    </div>
+  )
 }

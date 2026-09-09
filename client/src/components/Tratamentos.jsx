@@ -2,6 +2,7 @@ import { useRef, useEffect, useState } from 'react'
 import { motion, useScroll, useTransform, useReducedMotion } from 'motion/react'
 import { useSiteData } from '../context/SiteDataContext'
 import Reveal from './Reveal'
+import EditableText from './editable/EditableText'
 
 /**
  * Cards empilhados no scroll (sticky stack), o mesmo efeito do site da
@@ -23,9 +24,9 @@ export default function Tratamentos() {
     <section id="tratamentos" className="section section--surface" ref={containerRef}>
       <div className="container">
         <Reveal className="section-head">
-          <span className="eyebrow">{t.eyebrow}</span>
-          <h2>{t.title}</h2>
-          {t.intro && <p className="lead">{t.intro}</p>}
+          <EditableText path="tratamentos.eyebrow" className="eyebrow" />
+          <EditableText as="h2" path="tratamentos.title" />
+          <EditableText as="p" path="tratamentos.intro" className="lead" multiline />
         </Reveal>
       </div>
 
@@ -90,12 +91,12 @@ function StackCard({ item, index, total }) {
       <motion.article className="stack__card" style={style}>
         <div className="stack__body">
           <span className="stack__number">{item.number || String(index + 1).padStart(2, '0')}</span>
-          <h3 className="stack__title">{item.title}</h3>
-          <p className="stack__summary">{item.summary}</p>
+          <EditableText as="h3" className="stack__title" path={`tratamentos.items.${index}.title`} />
+          <EditableText as="p" className="stack__summary" path={`tratamentos.items.${index}.summary`} multiline />
           {item.list?.length > 0 && (
             <ul className="stack__list">
               {item.list.map((li, k) => (
-                <li key={k}>{li}</li>
+                <EditableText as="li" key={k} path={`tratamentos.items.${index}.list.${k}`} />
               ))}
             </ul>
           )}
