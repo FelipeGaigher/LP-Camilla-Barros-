@@ -8,7 +8,7 @@ export default function Sobre() {
   const go = (e, href) => { if (scrollToAnchor(href)) e.preventDefault() }
 
   return (
-    <section id="sobre" className="section section--cream-deep">
+    <section id="sobre" className="section section--surface">
       <div className="container sobre__grid">
         <Reveal className="sobre__portrait">
           {s.image ? (

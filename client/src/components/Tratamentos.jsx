@@ -20,7 +20,7 @@ export default function Tratamentos() {
   if (!t.items?.length) return null
 
   return (
-    <section id="tratamentos" className="section section--cream-deep" ref={containerRef}>
+    <section id="tratamentos" className="section section--surface" ref={containerRef}>
       <div className="container">
         <Reveal className="section-head">
           <span className="eyebrow">{t.eyebrow}</span>

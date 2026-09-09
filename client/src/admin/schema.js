@@ -37,7 +37,19 @@ export const SCHEMA = {
         ],
       },
       {
-        key: 'media', label: 'Imagem ou video de fundo', type: 'group',
+        key: 'chips', label: 'Selos sobre a foto', type: 'list',
+        hint: 'Tres funcionam melhor. Mais que isso polui o retrato.',
+        item: [
+          { key: 'label', label: 'Texto', type: 'text' },
+          { key: 'icon', label: 'Icone', type: 'select', options: [
+            { value: 'check', label: 'Confere' },
+            { value: 'relogio', label: 'Relogio' },
+            { value: 'escudo', label: 'Escudo' },
+          ] },
+        ],
+      },
+      {
+        key: 'media', label: 'Foto ou video da Camilla', type: 'group',
         fields: [
           { key: 'type', label: 'Tipo', type: 'select', options: [
             { value: 'image', label: 'Imagem' }, { value: 'video', label: 'Video' },

@@ -7,7 +7,7 @@ const SiteDataContext = createContext(null)
 
 // Suba este numero sempre que a estrutura do defaults mudar de forma
 // incompativel: o cache local do visitante e descartado automaticamente.
-const DATA_VERSION = 1
+const DATA_VERSION = 2
 const VERSION_KEY = 'camilla_data_version'
 
 function clone(v) {

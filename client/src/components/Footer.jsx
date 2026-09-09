@@ -17,7 +17,12 @@ export default function Footer() {
       <div className="container">
         <div className="footer__top">
           <div>
-            <div className="footer__logo">{f.logoText}</div>
+            {/* No rodape cabe o lockup completo, invertido sobre a faixa escura. */}
+            <img
+              className="footer__mark"
+              src="/marca/logo-lockup.png"
+              alt={`${f.legal.profissional}, ${f.tagline}`}
+            />
             <p className="footer__tagline">{f.tagline}</p>
             <div className="footer__social">
               {wa && (

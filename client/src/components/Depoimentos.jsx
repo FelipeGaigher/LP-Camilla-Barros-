@@ -14,7 +14,7 @@ export default function Depoimentos() {
   if (!d.items?.length) return null
 
   return (
-    <section id="depoimentos" className="section section--sage">
+    <section id="depoimentos" className="section section--dark">
       <div className="container">
         <Reveal className="section-head">
           <span className="eyebrow">{d.eyebrow}</span>

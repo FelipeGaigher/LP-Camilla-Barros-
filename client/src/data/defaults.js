@@ -46,13 +46,19 @@ export const defaults = {
       '[PLACEHOLDER] Um consultorio pensado para que cada etapa do seu tratamento seja clara, tranquila e feita no seu tempo.',
     ctaPrimary: { label: 'Agendar consulta', href: '#contato' },
     ctaSecondary: { label: 'Conhecer os tratamentos', href: '#tratamentos' },
+    // Selos que flutuam sobre o retrato. icon: check | relogio | escudo
+    chips: [
+      { label: 'Confianca', icon: 'check' },
+      { label: 'Hora marcada', icon: 'relogio' },
+      { label: 'Biosseguranca', icon: 'escudo' },
+    ],
     // media.type: 'image' | 'video'
     media: {
       type: 'image',
       image: '',
       video: '',
       poster: '',
-      alt: 'Consultorio da Dra. Camilla',
+      alt: 'Dra. Camilla Barros no consultorio',
       objectPosition: 'center',
     },
   },

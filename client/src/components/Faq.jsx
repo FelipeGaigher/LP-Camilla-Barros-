@@ -11,7 +11,7 @@ export default function Faq() {
   if (!f.items?.length) return null
 
   return (
-    <section id="faq" className="section section--cream-deep">
+    <section id="faq" className="section section--surface">
       <div className="container faq__grid">
         <Reveal>
           <span className="eyebrow">{f.eyebrow}</span>

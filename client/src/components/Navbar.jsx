@@ -36,8 +36,11 @@ export default function Navbar() {
   return (
     <header className={`nav ${scrolled ? 'is-scrolled' : ''} ${hidden ? 'is-hidden' : ''}`}>
       <div className="container nav__inner">
+        {/* O lockup completo so e legivel a partir de ~200px de largura, e no
+            menu nao cabe. Por isso aqui vai o monograma isolado. */}
         <a className="nav__logo" href="#top" onClick={(e) => go(e, '#top')}>
-          {nav.logoImage ? <img src={nav.logoImage} alt={nav.logoText} /> : nav.logoText}
+          <img src={nav.logoImage || '/marca/logo-monograma.png'} alt="" />
+          <span>{nav.logoText}</span>
         </a>
 
         <nav className="nav__links" aria-label="Navegacao principal">

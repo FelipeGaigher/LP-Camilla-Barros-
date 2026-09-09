@@ -58,7 +58,7 @@ export default function VideoSection() {
             {v.videoUrl && !playing && (
               <button className="videosec__play" onClick={() => setPlaying(true)} aria-label="Reproduzir video">
                 <span>
-                  <svg width="20" height="22" viewBox="0 0 20 22" fill="var(--sage-deep)" aria-hidden="true">
+                  <svg width="20" height="22" viewBox="0 0 20 22" fill="var(--accent)" aria-hidden="true">
                     <path d="M19 9.27a2 2 0 0 1 0 3.46L3 21.99a2 2 0 0 1-3-1.73V1.74A2 2 0 0 1 3 .01l16 9.26z" />
                   </svg>
                 </span>
