@@ -5,3 +5,6 @@ dist
 .DS_Store
 *.log
 uploads
+
+# tarballs de transferencia
+*.tar.gz
