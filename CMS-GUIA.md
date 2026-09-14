@@ -12,7 +12,8 @@ desfazer e um de restaurar o texto original.
 2. Entre com seu usuário e senha
 3. Na primeira vez, vá em **Minha conta** e troque a senha
 
-A sessão dura 7 dias. Depois disso o painel pede a senha de novo.
+A sessão dura 7 dias e continua valendo se você fechar o navegador. Depois disso
+o painel pede a senha de novo.
 
 ---
 
@@ -53,6 +54,10 @@ Dicas para as fotos ficarem boas:
 Para o vídeo: o limite é 200 MB. Se o seu arquivo for maior, sobe no YouTube como
 "não listado" e cola o link aqui.
 
+Arquivo grande pode demorar, principalmente pelo celular. A barra de porcentagem
+mostra o andamento — **não feche a aba antes de ela chegar ao fim.** Se a conexão
+cair no meio, o envio tenta sozinho de novo; se ainda assim falhar, é só repetir.
+
 ---
 
 ## Listas: adicionar, remover e reordenar
@@ -81,6 +86,10 @@ Todo formulário preenchido no site cai em **Contatos recebidos**. Ali você vê
 WhatsApp, e-mail e a mensagem, com o número já clicável para abrir a conversa.
 
 O botão **Baixar planilha** exporta tudo em Excel.
+
+**Você também recebe um e-mail a cada contato novo**, com os dados e um botão
+"Responder no WhatsApp" que já abre a conversa com a primeira mensagem escrita.
+Dá para responder direto do celular, sem abrir o painel.
 
 **Importante**: responder rápido é o que mais faz diferença. Quem responde em menos
 de 2 minutos agenda quase o dobro de consultas de quem demora.
@@ -140,4 +149,7 @@ de computador ou limpar o navegador.
 Pode. O painel funciona no celular, com o botão "Menu" no canto da tela.
 
 **Esqueci a senha.**
-Fala com o Felipe, ele redefine pelo servidor.
+Na tela de login, clique em **Esqueci minha senha** e informe o seu e-mail.
+Chega um link que vale por 1 hora e só funciona uma vez. Se o e-mail não
+aparecer, confira a caixa de spam — e se mesmo assim não chegar, fala com o
+Felipe.

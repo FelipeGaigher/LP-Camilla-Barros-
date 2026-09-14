@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { SiteDataProvider, useSiteData } from './context/SiteDataContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { EditModeProvider } from './context/EditModeContext'
@@ -42,21 +42,27 @@ function Shell() {
 }
 
 function RequireAuth({ children }) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, checking } = useAuth()
+  // A sessao esta num cookie httpOnly, entao so o servidor sabe se ela vale.
+  // Redirecionar antes da resposta jogaria a Camilla pro login a cada F5.
+  if (checking) return null
   if (!isAuthenticated) return <Navigate to="/admin/login" replace />
   return children
 }
 
-export default function App() {
+/**
+ * `staticSections` so chega no prerender de build (client/src/entry-server.jsx),
+ * com o conteudo lido do banco. No navegador vem undefined e o provider volta
+ * ao caminho normal: cache local, depois API.
+ */
+export default function App({ staticSections }) {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <SiteDataProvider>
-          <EditModeProvider>
-            <Shell />
-          </EditModeProvider>
-        </SiteDataProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <AuthProvider>
+      <SiteDataProvider staticSections={staticSections}>
+        <EditModeProvider>
+          <Shell />
+        </EditModeProvider>
+      </SiteDataProvider>
+    </AuthProvider>
   )
 }

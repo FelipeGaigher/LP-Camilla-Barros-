@@ -1,24 +1,32 @@
+import { upload } from '@vercel/blob/client'
+
 const API_BASE = '/api'
-const TOKEN_KEY = 'camilla_token'
 
-export function getToken() {
-  return sessionStorage.getItem(TOKEN_KEY) || ''
-}
-export function setToken(token) {
-  sessionStorage.setItem(TOKEN_KEY, token)
-}
-export function clearToken() {
-  sessionStorage.removeItem(TOKEN_KEY)
+// A sessao vive num cookie httpOnly: o JavaScript nao le e nao escreve o token.
+// Em dev o Vite faz proxy de /api, entao continua sendo mesma origem.
+const withCreds = { credentials: 'same-origin' }
+const jsonHeaders = { 'Content-Type': 'application/json' }
+
+async function post(url, body) {
+  try {
+    const res = await fetch(url, {
+      ...withCreds,
+      method: 'POST',
+      headers: jsonHeaders,
+      body: JSON.stringify(body || {}),
+    })
+    return await res.json()
+  } catch {
+    return { ok: false, error: 'Servidor indisponivel' }
+  }
 }
 
-function authHeaders() {
-  return { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` }
-}
+// ---------------------------------------------------------------- secoes
 
 export async function fetchAllSections({ bustCache = false } = {}) {
   try {
     const url = bustCache ? `${API_BASE}/sections?_t=${Date.now()}` : `${API_BASE}/sections`
-    const res = await fetch(url)
+    const res = await fetch(url, withCreds)
     if (!res.ok) return null
     return await res.json()
   } catch {
@@ -28,9 +36,10 @@ export async function fetchAllSections({ bustCache = false } = {}) {
 
 export async function saveSection(key, data) {
   try {
-    const res = await fetch(`${API_BASE}/sections/${key}`, {
+    const res = await fetch(`${API_BASE}/sections?key=${encodeURIComponent(key)}`, {
+      ...withCreds,
       method: 'PUT',
-      headers: authHeaders(),
+      headers: jsonHeaders,
       body: JSON.stringify({ data }),
     })
     return res.ok
@@ -41,75 +50,78 @@ export async function saveSection(key, data) {
 
 export async function resetSection(key) {
   try {
-    const res = await fetch(`${API_BASE}/sections/${key}`, { method: 'DELETE', headers: authHeaders() })
+    const res = await fetch(`${API_BASE}/sections?key=${encodeURIComponent(key)}`, {
+      ...withCreds,
+      method: 'DELETE',
+    })
     return res.ok
   } catch {
     return false
   }
 }
 
+// ------------------------------------------------------------------ auth
+
 export async function loginApi(username, password) {
-  try {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    })
-    return await res.json()
-  } catch {
-    return { ok: false, error: 'Servidor indisponivel' }
-  }
+  return post(`${API_BASE}/auth?action=login`, { username, password })
 }
 
 export async function logoutApi() {
   try {
-    await fetch(`${API_BASE}/auth/logout`, { method: 'POST', headers: authHeaders() })
+    await fetch(`${API_BASE}/auth?action=logout`, { ...withCreds, method: 'POST' })
   } catch {}
 }
 
-export async function changePasswordApi(currentPassword, newPassword) {
+/** Quem esta logado, segundo o servidor. Null quando nao ha sessao valida. */
+export async function fetchMe() {
   try {
-    const res = await fetch(`${API_BASE}/auth/change-password`, {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({ currentPassword, newPassword }),
-    })
-    return await res.json()
+    const res = await fetch(`${API_BASE}/auth?action=me`, withCreds)
+    if (!res.ok) return null
+    const json = await res.json()
+    return json?.ok ? json : null
   } catch {
-    return { ok: false, error: 'Servidor indisponivel' }
+    return null
   }
 }
 
+export async function changePasswordApi(currentPassword, newPassword) {
+  return post(`${API_BASE}/auth?action=change-password`, { currentPassword, newPassword })
+}
+
+export async function forgotPasswordApi(email) {
+  return post(`${API_BASE}/auth?action=forgot-password`, { email })
+}
+
+export async function resetPasswordApi(token, newPassword) {
+  return post(`${API_BASE}/auth?action=reset-password`, { token, newPassword })
+}
+
+// ----------------------------------------------------------------- midia
+
+// Acima disso o upload vai em partes paralelas, com retentativa por parte.
+// Numa conexao domestica, um video de 100 MB numa requisicao unica cai no meio
+// e recomeca do zero.
+const MULTIPART_ACIMA_DE = 10 * 1024 * 1024
+
 /**
- * Envia um File (imagem ou video) direto para o servidor.
- * Retorna a URL publica (/uploads/...).
+ * Sobe um arquivo direto pro Vercel Blob.
+ *
+ * O arquivo nao passa pela funcao serverless — ela so assina o token. Por isso
+ * o video da Camilla cabe: o limite de 4,5 MB de corpo nao se aplica.
  */
 export async function uploadMedia(file, onProgress) {
-  return new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest()
-    xhr.open('POST', `${API_BASE}/media?name=${encodeURIComponent(file.name)}`)
-    xhr.setRequestHeader('Content-Type', file.type)
-    xhr.setRequestHeader('Authorization', `Bearer ${getToken()}`)
-    xhr.upload.onprogress = (e) => {
-      if (e.lengthComputable && onProgress) onProgress(Math.round((e.loaded / e.total) * 100))
-    }
-    xhr.onload = () => {
-      try {
-        const json = JSON.parse(xhr.responseText)
-        if (xhr.status === 200 && json.url) resolve(json.url)
-        else reject(new Error(json.error || 'Falha no upload'))
-      } catch {
-        reject(new Error('Falha no upload'))
-      }
-    }
-    xhr.onerror = () => reject(new Error('Falha de rede no upload'))
-    xhr.send(file)
+  const blob = await upload(file.name, file, {
+    access: 'public',
+    handleUploadUrl: `${API_BASE}/media`,
+    multipart: file.size > MULTIPART_ACIMA_DE,
+    onUploadProgress: ({ percentage }) => onProgress?.(Math.round(percentage)),
   })
+  return blob.url
 }
 
 export async function listMedia() {
   try {
-    const res = await fetch(`${API_BASE}/media`, { headers: authHeaders() })
+    const res = await fetch(`${API_BASE}/media`, withCreds)
     if (!res.ok) return []
     const json = await res.json()
     return json.files || []
@@ -118,31 +130,24 @@ export async function listMedia() {
   }
 }
 
-export async function deleteMedia(name) {
+export async function deleteMedia(url) {
   try {
-    await fetch(`${API_BASE}/media/${encodeURIComponent(name)}`, { method: 'DELETE', headers: authHeaders() })
+    await fetch(`${API_BASE}/media?url=${encodeURIComponent(url)}`, { ...withCreds, method: 'DELETE' })
     return true
   } catch {
     return false
   }
 }
 
+// ----------------------------------------------------------------- leads
+
 export async function sendLead(payload) {
-  try {
-    const res = await fetch(`${API_BASE}/leads`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-    return await res.json()
-  } catch {
-    return { ok: false, error: 'Servidor indisponivel' }
-  }
+  return post(`${API_BASE}/leads`, payload)
 }
 
 export async function fetchLeads() {
   try {
-    const res = await fetch(`${API_BASE}/leads`, { headers: authHeaders() })
+    const res = await fetch(`${API_BASE}/leads`, withCreds)
     if (!res.ok) return []
     const json = await res.json()
     return json.leads || []
@@ -153,10 +158,9 @@ export async function fetchLeads() {
 
 export async function deleteLead(id) {
   try {
-    const res = await fetch(`${API_BASE}/leads`, {
+    const res = await fetch(`${API_BASE}/leads?id=${encodeURIComponent(id)}`, {
+      ...withCreds,
       method: 'DELETE',
-      headers: authHeaders(),
-      body: JSON.stringify({ id }),
     })
     return res.ok
   } catch {

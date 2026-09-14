@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from 'motion/react'
+import { podeAnimar } from '../lib/motionEnv'
 import { useSiteData } from '../context/SiteDataContext'
 import { scrollToAnchor } from './SmoothScroll'
 import { WhatsAppIcon } from './Chrome'
@@ -32,7 +33,9 @@ export default function Hero() {
   const { data } = useSiteData()
   const hero = data.hero
   const cred = data.credenciais
-  const reduce = useReducedMotion()
+  // Sem navegador (prerender de build) o tratamento e o mesmo de quem pediu
+  // menos movimento: renderiza ja no estado final, sem passar por opacity: 0.
+  const reduce = useReducedMotion() || !podeAnimar
   const { isEditing } = useEditMode()
 
   const go = (e, href) => {

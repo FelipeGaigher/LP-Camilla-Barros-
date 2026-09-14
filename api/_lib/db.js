@@ -1,28 +1,22 @@
-import postgres from 'postgres'
+import { neon } from '@neondatabase/serverless'
 
 let sql
 
 /**
- * Conexao unica com o PostgreSQL do servidor.
- * Usa tagged templates (mesma sintaxe do Neon serverless usado no Ibira),
- * entao os handlers sao portaveis entre VPS e serverless.
+ * Conexao com o Neon Postgres.
+ *
+ * neon() fala HTTP, nao socket: cada query e um POST independente. E isso que
+ * torna o handler seguro em serverless — nao existe pool pra vazar entre
+ * invocacoes, nem conexao ociosa segurando slot no banco.
+ *
+ * O singleton em variavel de modulo aproveita a lambda quente entre requests.
  */
 export function getDb() {
   if (!sql) {
     if (!process.env.DATABASE_URL) {
-      throw new Error('DATABASE_URL nao configurada. Copie .env.example para .env.')
+      throw new Error('DATABASE_URL nao configurada. Copie .env.example para .env.local.')
     }
-    sql = postgres(process.env.DATABASE_URL, {
-      max: 10,
-      idle_timeout: 20,
-      connect_timeout: 10,
-      transform: { undefined: null },
-    })
+    sql = neon(process.env.DATABASE_URL)
   }
   return sql
-}
-
-export async function closeDb() {
-  if (sql) await sql.end()
-  sql = undefined
 }

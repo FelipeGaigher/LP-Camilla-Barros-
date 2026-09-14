@@ -15,7 +15,12 @@ function clone(v) {
   return JSON.parse(JSON.stringify(v))
 }
 
+// No prerender de build nao existe navegador: localStorage, fetch de /api e
+// efeitos nao rodam. Tudo que toca o browser precisa passar por aqui.
+const isBrowser = typeof window !== 'undefined'
+
 function isStaleVersion() {
+  if (!isBrowser) return false
   try {
     return parseInt(localStorage.getItem(VERSION_KEY) || '0', 10) < DATA_VERSION
   } catch {
@@ -24,6 +29,7 @@ function isStaleVersion() {
 }
 
 function markVersionCurrent() {
+  if (!isBrowser) return
   try {
     localStorage.setItem(VERSION_KEY, String(DATA_VERSION))
   } catch {}
@@ -48,8 +54,14 @@ function withDefaults(partial) {
   return state
 }
 
-export function SiteDataProvider({ children }) {
+export function SiteDataProvider({ children, staticSections }) {
+  // staticSections so existe no prerender de build: o conteudo ja vem do banco,
+  // entao o estado nasce pronto. Sem isso o HTML estatico sairia com a tela de
+  // carregamento congelada, que e justamente o que o crawler leria.
+  const isStatic = !!staticSections
+
   const [data, setData] = useState(() => {
+    if (isStatic) return withDefaults(staticSections)
     if (isStaleVersion()) {
       saveAll({})
       markVersionCurrent()
@@ -57,7 +69,7 @@ export function SiteDataProvider({ children }) {
     }
     return withDefaults(loadAll())
   })
-  const [ready, setReady] = useState(false)
+  const [ready, setReady] = useState(isStatic)
   const [syncing, setSyncing] = useState(false)
   const undoRef = useRef({})
   const [undoAvailable, setUndoAvailable] = useState({})
@@ -73,8 +85,9 @@ export function SiteDataProvider({ children }) {
   }, [])
 
   useEffect(() => {
+    if (isStatic) return
     refreshFromApi()
-  }, [refreshFromApi])
+  }, [refreshFromApi, isStatic])
 
   const updateSection = useCallback(
     (section, sectionData, { skipUndo = false } = {}) => {

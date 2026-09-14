@@ -1,4 +1,5 @@
 import { motion, useReducedMotion } from 'motion/react'
+import { podeAnimar as animar } from '../lib/motionEnv'
 
 const EASE = [0.33, 1, 0.68, 1]
 
@@ -19,7 +20,7 @@ export default function Reveal({
   const reduce = useReducedMotion()
   const Tag = motion[as] || motion.div
 
-  if (reduce) {
+  if (reduce || !animar) {
     const Plain = as
     return (
       <Plain className={className} {...rest}>
@@ -45,7 +46,7 @@ export default function Reveal({
 /** Revela filhos em cascata. Use com <Reveal.Item> como filho direto. */
 export function RevealGroup({ children, className, stagger = 0.08, amount = 0.2, ...rest }) {
   const reduce = useReducedMotion()
-  if (reduce) return <div className={className} {...rest}>{children}</div>
+  if (reduce || !animar) return <div className={className} {...rest}>{children}</div>
 
   return (
     <motion.div
@@ -63,6 +64,10 @@ export function RevealGroup({ children, className, stagger = 0.08, amount = 0.2,
 
 export function RevealItem({ children, className, y = 24, as = 'div', ...rest }) {
   const Tag = motion[as] || motion.div
+  if (!animar) {
+    const Plain = as
+    return <Plain className={className} {...rest}>{children}</Plain>
+  }
   return (
     <Tag
       className={className}

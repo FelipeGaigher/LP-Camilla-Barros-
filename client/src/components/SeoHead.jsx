@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useSiteData } from '../context/SiteDataContext'
+import { buildMeta, buildJsonLd } from '../lib/seo'
 
 function setMeta(attr, key, content) {
   if (!content) return
@@ -24,57 +25,33 @@ function setLink(rel, href) {
 }
 
 /**
- * Aplica title, metas e o JSON-LD de schema.org/Dentist a partir do painel.
- * O JSON-LD e o que faz o Google entender que isso e um consultorio em
- * Vitoria/ES, com endereco e horario, o que praticamente ninguem no ES faz.
+ * Mantem title, metas e JSON-LD em dia com o que esta no painel.
+ *
+ * O prerender ja escreve tudo isso no HTML (scripts/prerender.js, mesma fonte
+ * em lib/seo.js). Este componente cobre o que muda depois do build: a Camilla
+ * editou o titulo pelo CMS e ainda nao houve redeploy.
  */
 export default function SeoHead() {
   const { data } = useSiteData()
-  const seo = data.seo
-  const f = data.footer
-  const c = data.contato
 
   useEffect(() => {
-    if (seo.title) document.title = seo.title
-    setMeta('name', 'description', seo.description)
-    setMeta('name', 'theme-color', seo.themeColor)
-    setMeta('property', 'og:title', seo.title)
-    setMeta('property', 'og:description', seo.description)
+    const m = buildMeta(data)
+    if (m.title) document.title = m.title
+    setMeta('name', 'description', m.description)
+    setMeta('name', 'theme-color', m.themeColor)
+    setMeta('property', 'og:title', m.title)
+    setMeta('property', 'og:description', m.description)
     setMeta('property', 'og:type', 'website')
-    setMeta('property', 'og:url', seo.siteUrl)
-    setMeta('property', 'og:image', seo.ogImage)
+    setMeta('property', 'og:url', m.canonical)
+    setMeta('property', 'og:image', m.ogImage)
     setMeta('name', 'twitter:card', 'summary_large_image')
-    if (seo.favicon) setLink('icon', seo.favicon)
-    if (seo.siteUrl) setLink('canonical', seo.siteUrl)
-  }, [seo])
+    setMeta('name', 'twitter:title', m.title)
+    setMeta('name', 'twitter:description', m.description)
+    if (m.favicon) setLink('icon', m.favicon)
+    if (m.canonical) setLink('canonical', m.canonical)
+  }, [data])
 
   useEffect(() => {
-    const s = seo.schema || {}
-    const phone = String(c?.whatsapp?.number || '').replace(/\D/g, '')
-    const json = {
-      '@context': 'https://schema.org',
-      '@type': 'Dentist',
-      name: s.name || seo.title,
-      description: seo.description,
-      url: seo.siteUrl,
-      image: seo.ogImage || undefined,
-      telephone: phone ? `+${phone}` : undefined,
-      address: {
-        '@type': 'PostalAddress',
-        streetAddress: s.street,
-        addressLocality: s.city,
-        addressRegion: s.state,
-        postalCode: s.postalCode,
-        addressCountry: 'BR',
-      },
-      geo:
-        s.latitude && s.longitude
-          ? { '@type': 'GeoCoordinates', latitude: s.latitude, longitude: s.longitude }
-          : undefined,
-      openingHours: (f?.horarios || []).map((h) => `${h.day} ${h.hours}`),
-      sameAs: [f?.social?.instagram, f?.social?.facebook].filter(Boolean),
-    }
-
     let el = document.getElementById('ld-json')
     if (!el) {
       el = document.createElement('script')
@@ -82,8 +59,8 @@ export default function SeoHead() {
       el.id = 'ld-json'
       document.head.appendChild(el)
     }
-    el.textContent = JSON.stringify(json, (k, v) => (v === undefined ? undefined : v))
-  }, [seo, f, c])
+    el.textContent = JSON.stringify(buildJsonLd(data))
+  }, [data])
 
   return null
 }

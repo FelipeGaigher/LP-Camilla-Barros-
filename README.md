@@ -7,50 +7,63 @@ textos, fotos e vídeos sozinha, sem mexer em código.
 
 | Camada | Escolha | Por quê |
 |---|---|---|
-| Front | React 19 + Vite | Mesmo padrão do Ibira e do Melton Sello |
+| Front | React 19 + Vite | Mesmo padrão do NovaES, Rara Calma e Automatiza |
 | Roteamento | react-router-dom 7 | Site público + `/admin` no mesmo bundle |
 | Animação | Motion (Framer Motion) + Lenis | Cards empilhados, reveals e scroll suave |
 | Estilo | CSS puro com design tokens | Controle fino da tipografia editorial |
-| API | Express 5 | Roda direto na VPS Hetzner, sem serverless |
-| Banco | PostgreSQL via `postgres` | Tagged templates, mesma sintaxe do Neon |
-| Uploads | Disco do servidor (`/uploads`) | Vídeo da Camilla não cabe em base64 no banco |
+| API | Funções serverless da Vercel | Sem servidor para manter; escala sozinho |
+| Banco | Neon Postgres (`@neondatabase/serverless`) | Driver HTTP, sem pool para vazar entre invocações |
+| Uploads | Vercel Blob, direto do navegador | O corpo de uma função para em 4,5 MB; o vídeo não |
+| SEO | Prerender no build | Crawler e WhatsApp recebem HTML real, não `<div id="root">` |
+| E-mail | Brevo (API v3, sem SDK) | Aviso de lead e recuperação de senha |
 
 ## Rodar local
 
 ```bash
-cp .env.example .env      # preencha DATABASE_URL e ADMIN_PASSWORD
+cp .env.example .env.local   # preencha DATABASE_URL (Neon) e ADMIN_PASSWORD
 npm install
-npm run migrate           # cria as tabelas
-npm run seed              # cria o usuário admin e o conteúdo inicial
-npm run dev:api           # API na 3001
-npm run dev               # front na 5173, já com proxy para a API
+npm run migrate              # cria as tabelas
+npm run seed                 # cria o usuário admin e o conteúdo inicial
+npm run dev:full             # API na 3000 + front na 5173
 ```
 
 Site em `http://localhost:5173`, painel em `http://localhost:5173/admin`.
 
-## Build e produção
+`npm run dev:full` sobe um Express que varre `api/` e monta as rotas com os
+mesmos handlers que a Vercel executa em produção — o código que você testa é
+literalmente o que vai para o ar, sem depender do `vercel dev`.
+
+## Build
 
 ```bash
-npm run build             # gera dist/
-npm start                 # Express serve a API + o dist/ na mesma porta
+npm run build     # vite build + bundle SSR + prerender + sitemap
 ```
 
-Passo a passo completo da VPS em [`DEPLOY-VPS.md`](./DEPLOY-VPS.md).
+Push em `main` faz deploy de produção; push em qualquer outra branch gera uma URL
+de preview. Passo a passo em [`DEPLOY.md`](./DEPLOY.md).
 
 ## Estrutura
 
 ```
-server.js                   Express: API + estáticos + fallback SPA
-api/
-  _lib/                     db, auth, rate limit, audit log
-  routes/                   sections, auth, leads, media
+vercel.json                 build, rewrites e headers de segurança
+api/                        uma função serverless por arquivo
+  sections.js               GET (todas) · GET/PUT/DELETE ?key=
+  auth.js                   ?action=login|logout|me|change-password
+                            |forgot-password|reset-password
+  leads.js                  POST público · GET/DELETE protegidos
+  media.js                  emite o token de upload do Blob · lista · apaga
+  _lib/                     db, auth, cookies, origin, rate limit, audit,
+                            brevo, templates de e-mail, ensureAdmin, reset
 scripts/
-  migrate.js                runner de migrations
-  seed.js                   admin inicial + conteúdo padrão
-  migrations/               SQL versionado
+  dev-server.js             roda os handlers de api/ localmente
+  migrate.js · seed.js      migrations e conteúdo inicial
+  admin-reset-password.js   resgate de acesso pelo terminal
+  prerender.js              HTML real da home + metas + JSON-LD
+  generate-sitemap.js       sitemap.xml e robots.txt
 client/
-  index.html
+  index.html                metas OG que o prerender reescreve
   src/
+    entry-server.jsx        entry usado só pelo prerender
     components/             seções do site público
     admin/
       schema.js             DEFINE O PAINEL INTEIRO
@@ -58,9 +71,16 @@ client/
       sections/             telas próprias (visibilidade, leads, conta)
     context/                SiteData (CMS) e Auth
     data/defaults.js        CONTEÚDO PADRÃO DE TODAS AS SEÇÕES
+    lib/seo.js              metas e JSON-LD, usados no build e em runtime
     pages/                  HomePage, AdminLogin, AdminPanel, NotFound
     styles/                 global.css (site) e admin.css (painel)
 ```
+
+### Por que quatro arquivos em `api/`
+
+O plano Hobby da Vercel permite 12 funções serverless. Por isso o auth inteiro
+mora em `api/auth.js` com `?action=`, em vez de seis arquivos — mesma convenção
+do NovaES. Sobra folga para crescer.
 
 ## Como o CMS funciona
 
@@ -91,6 +111,39 @@ Cada seção é uma linha em `site_sections`, com o conteúdo inteiro em JSONB.
 O front carrega tudo de uma vez em `GET /api/sections` no boot, guarda no
 `localStorage` como cache, e cai no `defaults.js` se a API estiver fora. Ou seja,
 o site nunca aparece quebrado por causa do banco.
+
+**Os GETs do CMS vão com `Cache-Control: no-store`, de propósito.** Com
+`s-maxage`, o edge da Vercel servia cópia velha por até um minuto depois de um
+save — a gravação persistia, mas a Camilla recarregava e via o texto antigo,
+concluindo que o painel não salvou. O Neon responde em poucos ms; o custo de ler
+direto é irrelevante perto do custo de desconfiar da ferramenta.
+
+### SEO
+
+`npm run build` roda três etapas depois do `vite build`: compila um bundle SSR,
+lê um snapshot de `site_sections` no Neon e escreve a home já renderizada em
+`dist/index.html`, com `<title>`, Open Graph e o JSON-LD de `schema.org/Dentist`.
+O shell da SPA é preservado como `dist/app.html`, para onde o `vercel.json`
+manda `/admin` e as demais rotas.
+
+As metas e o JSON-LD saem de `client/src/lib/seo.js` — a mesma função que o
+`SeoHead` aplica em runtime. Uma definição só: se fossem duas, a do build
+envelheceria calada.
+
+Conteúdo editado no painel aparece na hora para quem visita (o React busca a API
+na montagem), mas só entra no HTML estático no próximo deploy. Para o crawler ver
+a edição, é preciso um novo build.
+
+### Sessão
+
+O token fica num cookie `HttpOnly; SameSite=Lax`, não no `sessionStorage`. O
+JavaScript da página não lê nem escreve, então um XSS não leva a sessão embora —
+e ela sobrevive ao fechar a aba, durando os 7 dias de `admin_sessions`.
+
+Como o cookie viaja sozinho em qualquer requisição, incluindo as disparadas de
+outro site, toda mutação passa por `checkOrigin()` (`api/_lib/origin.js`).
+**Ao registrar o domínio final, acrescente-o à whitelist desse arquivo** — senão
+as gravações do painel voltam 403 em produção.
 
 ### Adicionar um campo novo ao painel
 

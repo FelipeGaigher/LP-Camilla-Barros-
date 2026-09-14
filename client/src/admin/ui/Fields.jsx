@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { uploadMedia } from '../../data/api'
+import { isEmbed as isEmbedUrl } from '../../lib/mediaUrl'
 
 /**
  * Renderiza um campo a partir da definicao do schema.
@@ -77,7 +78,7 @@ function MediaField({ kind, value, onChange }) {
     }
   }
 
-  const isEmbed = kind === 'video' && value && !value.startsWith('/uploads')
+  const isEmbed = kind === 'video' && isEmbedUrl(value)
 
   return (
     <div className="a-media">

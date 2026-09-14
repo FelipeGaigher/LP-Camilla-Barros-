@@ -11,10 +11,11 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // Em dev, o front (5173) fala com a API Express local (3001)
+      // O front (5173) fala com o servidor de dev que carrega os handlers de
+      // api/ (3000). Mesma origem via proxy, entao o cookie de sessao viaja.
       '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
+        target: 'http://localhost:3000',
+        changeOrigin: false,
       },
     },
   },

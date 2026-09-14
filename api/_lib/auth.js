@@ -1,5 +1,6 @@
 import crypto from 'node:crypto'
 import { getDb } from './db.js'
+import { getSessionCookie } from './cookies.js'
 
 const SESSION_DAYS = 7
 
@@ -8,38 +9,36 @@ export function makeToken() {
 }
 
 /**
- * Valida o Bearer token do header Authorization contra admin_sessions.
+ * Valida a sessao da request contra admin_sessions.
+ *
+ * Le o cookie httpOnly primeiro. O header Authorization: Bearer fica como
+ * fallback pra chamadas fora do navegador (curl, teste manual).
  */
 export async function requireAuth(req) {
-  const header = req.headers.authorization || req.headers.Authorization || ''
-  const token = String(header).replace('Bearer ', '').trim()
+  const token = getSessionCookie(req) || bearerToken(req)
   if (!token) return { authorized: false }
 
   const sql = getDb()
   const rows = await sql`
-    SELECT s.user_id, u.username
+    SELECT s.user_id, u.username, u.email
     FROM admin_sessions s
     JOIN admin_users u ON u.id = s.user_id
     WHERE s.token = ${token}
       AND (s.expires_at IS NULL OR s.expires_at > NOW())
   `
   if (rows.length === 0) return { authorized: false }
-  return { authorized: true, userId: rows[0].user_id, username: rows[0].username }
+  return {
+    authorized: true,
+    userId: rows[0].user_id,
+    username: rows[0].username,
+    email: rows[0].email,
+    token,
+  }
 }
 
-/**
- * Middleware Express: bloqueia a rota se nao houver sessao valida.
- */
-export async function authGuard(req, res, next) {
-  try {
-    const auth = await requireAuth(req)
-    if (!auth.authorized) return res.status(401).json({ error: 'Nao autorizado' })
-    req.auth = auth
-    next()
-  } catch (err) {
-    console.error('authGuard:', err)
-    res.status(500).json({ error: 'Erro interno' })
-  }
+export function bearerToken(req) {
+  const header = req.headers?.authorization || req.headers?.Authorization || ''
+  return String(header).replace('Bearer ', '').trim()
 }
 
 export async function createSession(userId) {

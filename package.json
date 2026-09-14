@@ -5,28 +5,31 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:api": "node --watch server.js",
-    "build": "vite build",
+    "dev:api": "node scripts/dev-server.js",
+    "dev:full": "node scripts/dev-server.js --full",
+    "build": "vite build && npm run build:seo",
+    "build:seo": "vite build --ssr src/entry-server.jsx --outDir ../dist-ssr && node scripts/prerender.js && node scripts/generate-sitemap.js",
     "preview": "vite preview",
-    "start": "node server.js",
     "migrate": "node scripts/migrate.js",
     "migrate:status": "node scripts/migrate.js --status",
-    "seed": "node scripts/seed.js"
+    "seed": "node scripts/seed.js",
+    "admin:reset": "node scripts/admin-reset-password.js"
   },
   "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "@vercel/blob": "^2.8.0",
     "bcryptjs": "^3.0.2",
-    "compression": "^1.7.5",
-    "dotenv": "^17.3.1",
-    "express": "^5.1.0",
     "lenis": "^1.3.17",
     "motion": "^12.23.12",
-    "postgres": "^3.4.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.13.0"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.4.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
+    "express": "^5.1.0",
     "vite": "^6.3.5"
   }
 }

@@ -2,15 +2,7 @@ import { useState } from 'react'
 import { useSiteData } from '../context/SiteDataContext'
 import Reveal from './Reveal'
 import EditableText from './editable/EditableText'
-
-function embedUrl(url) {
-  if (!url) return null
-  const yt = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{6,})/)
-  if (yt) return `https://www.youtube-nocookie.com/embed/${yt[1]}?autoplay=1&rel=0`
-  const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/)
-  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1`
-  return null
-}
+import { embedUrl } from '../lib/mediaUrl'
 
 export default function VideoSection() {
   const { data } = useSiteData()

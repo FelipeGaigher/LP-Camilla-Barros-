@@ -1,8 +1,11 @@
-import 'dotenv/config'
+import dotenv from 'dotenv'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { getDb, closeDb } from '../api/_lib/db.js'
+import { getDb } from '../api/_lib/db.js'
+
+dotenv.config({ path: '.env.local' })
+dotenv.config()
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const MIGRATIONS_DIR = path.join(__dirname, 'migrations')
@@ -45,12 +48,10 @@ async function run() {
     await sql`INSERT INTO migrations (name) VALUES (${migName})`
     console.log(`[ok]      ${migName}`)
   }
-
-  await closeDb()
 }
 
-run().catch(async (err) => {
+// neon() fala HTTP: nao ha conexao pra fechar no fim.
+run().catch((err) => {
   console.error('Falha na migracao:', err)
-  await closeDb()
   process.exit(1)
 })

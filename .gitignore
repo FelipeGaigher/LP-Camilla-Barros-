@@ -1,10 +1,11 @@
 node_modules
 dist
+dist-ssr
+.vercel
 .env
 .env.local
 .DS_Store
 *.log
-uploads
 
 # tarballs de transferencia
 *.tar.gz
