@@ -1,13 +1,15 @@
 import { useSiteData } from '../context/SiteDataContext'
+import { useNavigate } from 'react-router-dom'
 import Reveal, { RevealGroup, RevealItem } from './Reveal'
-import { scrollToAnchor } from './SmoothScroll'
+import { irPara } from '../lib/navegacao'
 import EditableText from './editable/EditableText'
 
 export default function Sintomas() {
   const { data } = useSiteData()
+  const navigate = useNavigate()
   const s = data.sintomas
 
-  const go = (e, href) => { if (scrollToAnchor(href)) e.preventDefault() }
+  const go = (e, href) => irPara(e, href, navigate)
 
   return (
     <section id="sintomas" className="section">

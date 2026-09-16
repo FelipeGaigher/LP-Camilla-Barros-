@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useSiteData } from '../context/SiteDataContext'
 import { buildMeta, buildJsonLd } from '../lib/seo'
 
@@ -33,9 +34,12 @@ function setLink(rel, href) {
  */
 export default function SeoHead() {
   const { data } = useSiteData()
+  const { pathname } = useLocation()
 
   useEffect(() => {
-    const m = buildMeta(data)
+    // Canonical acompanha a rota: uma rota nova herdaria a canonical da home
+    // e diria ao Google que e duplicata dela.
+    const m = buildMeta(data, pathname)
     if (m.title) document.title = m.title
     setMeta('name', 'description', m.description)
     setMeta('name', 'theme-color', m.themeColor)
@@ -49,7 +53,7 @@ export default function SeoHead() {
     setMeta('name', 'twitter:description', m.description)
     if (m.favicon) setLink('icon', m.favicon)
     if (m.canonical) setLink('canonical', m.canonical)
-  }, [data])
+  }, [data, pathname])
 
   useEffect(() => {
     let el = document.getElementById('ld-json')

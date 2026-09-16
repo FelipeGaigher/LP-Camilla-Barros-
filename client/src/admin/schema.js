@@ -236,10 +236,27 @@ export const SCHEMA = {
         ],
       },
       { key: 'formEnabled', label: 'Mostrar formulario', type: 'toggle' },
+      {
+        key: 'agendamento', label: 'Escolher horario no formulario', type: 'group',
+        hint: 'Os horarios em si vem de Consultorio > Horarios de atendimento. Aqui so os textos. Se o agendamento estiver desligado la, este bloco nao aparece no site.',
+        fields: [
+          { key: 'titulo', label: 'Titulo do bloco', type: 'text' },
+          { key: 'texto', label: 'Texto de apoio', type: 'textarea' },
+          {
+            key: 'aviso', label: 'Aviso antes de enviar', type: 'textarea',
+            hint: 'Precisa deixar claro que e um pedido, nao uma confirmacao. Nao escreva "confirmado" nem "vaga garantida".',
+          },
+          { key: 'sucesso', label: 'Mensagem apos pedir horario', type: 'text' },
+          { key: 'semHorario', label: 'Quando o dia nao tem horario livre', type: 'text' },
+          { key: 'verMais', label: 'Texto do botao que abre os horarios', type: 'text' },
+          { key: 'limpar', label: 'Texto para desistir do horario', type: 'text' },
+        ],
+      },
       { key: 'interesses', label: 'Opcoes do campo "sobre o que quer falar"', type: 'stringlist' },
       { key: 'successMessage', label: 'Mensagem apos enviar', type: 'text' },
     ],
   },
+
 
   footer: {
     label: 'Rodape',

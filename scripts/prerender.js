@@ -156,13 +156,18 @@ async function main() {
   const { buildMeta, buildJsonLd } = await import(pathToFileURL(path.resolve('client/src/lib/seo.js')).href)
 
   const sections = { ...defaults, ...(snapshot || {}) }
-  const meta = buildMeta(sections)
   const jsonLd = buildJsonLd(sections)
 
   const render = await loadRenderer()
 
   for (const route of ROUTES) {
-    let html = applyHead(template, { meta, jsonLd })
+    // Canonical e por pagina, nao por site: se um dia entrar uma rota nova aqui,
+    // repetir a canonical da home nela diria ao Google que as duas sao a mesma
+    // coisa, e a nova sairia do indice.
+    const meta = buildMeta(sections, route.url)
+
+    // O JSON-LD de Dentist descreve o consultorio, entao so faz sentido na home.
+    let html = applyHead(template, { meta, jsonLd: route.url === '/' ? jsonLd : null })
 
     if (render) {
       try {

@@ -7,13 +7,24 @@
  * Google continuaria lendo o titulo antigo.
  */
 
-/** Titulo, descricao e demais metas da pagina. */
-export function buildMeta(data) {
+/**
+ * Titulo, descricao e demais metas da pagina.
+ *
+ * `path` existe porque canonical e por PAGINA, nao por site. Uma rota nova que
+ * herdasse a canonical da home estaria dizendo ao Google que e duplicata dela,
+ * e sairia do indice.
+ *
+ * @param {string} [path] caminho da rota
+ */
+export function buildMeta(data, path = '/') {
   const seo = data?.seo || {}
+  const base = (seo.siteUrl || '').replace(/\/$/, '')
+  const rota = path && path !== '/' ? path : ''
+
   return {
     title: seo.title || '',
     description: seo.description || '',
-    canonical: (seo.siteUrl || '').replace(/\/$/, '') || '',
+    canonical: base ? `${base}${rota}` : '',
     ogImage: seo.ogImage || '',
     themeColor: seo.themeColor || '',
     favicon: seo.favicon || '',

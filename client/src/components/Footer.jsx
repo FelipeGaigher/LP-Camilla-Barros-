@@ -1,10 +1,12 @@
 import { useSiteData } from '../context/SiteDataContext'
+import { useNavigate } from 'react-router-dom'
 import { brtParts } from '../lib/brt'
 import { waLink, WhatsAppIcon, InstagramIcon } from './Chrome'
-import { scrollToAnchor } from './SmoothScroll'
+import { irPara } from '../lib/navegacao'
 
 export default function Footer() {
   const { data } = useSiteData()
+  const navigate = useNavigate()
   const f = data.footer
   const nav = data.nav
   const c = data.contato
@@ -12,7 +14,7 @@ export default function Footer() {
   const year = brtParts(new Date()).ano
   const wa = f.social.whatsapp || waLink(c.whatsapp.number, c.whatsapp.message)
 
-  const go = (e, href) => { if (scrollToAnchor(href)) e.preventDefault() }
+  const go = (e, href) => irPara(e, href, navigate)
 
   return (
     <footer className="footer">
