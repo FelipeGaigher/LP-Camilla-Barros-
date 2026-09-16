@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { matrizDoMes, brtParts, brtDayStart, nomeMes, hojeBRT, somaDias } from '../../lib/brt'
 
 /**
@@ -12,9 +12,16 @@ import { matrizDoMes, brtParts, brtDayStart, nomeMes, hojeBRT, somaDias } from '
  * `marcados` e um Set de 'YYYY-MM-DD' com atendimento no dia — o ponto embaixo
  * do numero e o que faz o calendario valer mais que um seletor de data.
  */
-export default function MiniCalendario({ selecionado, onSelecionar, marcados }) {
+export default function MiniCalendario({ selecionado, onSelecionar, marcados, comHoje = true }) {
   const base = brtParts(brtDayStart(selecionado) || new Date())
   const [mes, setMes] = useState({ ano: base.ano, mes: base.mes })
+
+  // Acompanha o valor escolhido por fora (digitado no campo, por exemplo),
+  // pra o calendario nao ficar mostrando um mes diferente do que esta no campo.
+  useEffect(() => {
+    const p = brtParts(brtDayStart(selecionado))
+    if (p) setMes({ ano: p.ano, mes: p.mes })
+  }, [selecionado])
 
   const semanas = useMemo(() => matrizDoMes(mes.ano, mes.mes), [mes])
   const hoje = hojeBRT()
@@ -28,9 +35,13 @@ export default function MiniCalendario({ selecionado, onSelecionar, marcados }) 
   return (
     <div className="mc">
       <header className="mc__head">
+        {/* Seta de ano ao lado da de mes: sem ela, chegar num nascimento de 1985
+            custaria centenas de cliques. */}
+        <button type="button" onClick={() => andar(-12)} aria-label="Ano anterior">&laquo;</button>
         <button type="button" onClick={() => andar(-1)} aria-label="Mes anterior">&lsaquo;</button>
         <strong>{nomeMes(mes.mes)} {mes.ano}</strong>
         <button type="button" onClick={() => andar(1)} aria-label="Proximo mes">&rsaquo;</button>
+        <button type="button" onClick={() => andar(12)} aria-label="Proximo ano">&raquo;</button>
       </header>
 
       <div className="mc__grade" role="grid">
@@ -63,13 +74,15 @@ export default function MiniCalendario({ selecionado, onSelecionar, marcados }) 
         })}
       </div>
 
-      <button type="button" className="mc__hoje" onClick={() => {
-        onSelecionar(hoje)
-        const p = brtParts(brtDayStart(hoje))
-        setMes({ ano: p.ano, mes: p.mes })
-      }}>
-        Ir para hoje
-      </button>
+      {comHoje && (
+        <button type="button" className="mc__hoje" onClick={() => {
+          onSelecionar(hoje)
+          const p = brtParts(brtDayStart(hoje))
+          setMes({ ano: p.ano, mes: p.mes })
+        }}>
+          Ir para hoje
+        </button>
+      )}
     </div>
   )
 }

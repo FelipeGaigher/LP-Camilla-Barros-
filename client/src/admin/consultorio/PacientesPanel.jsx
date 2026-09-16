@@ -7,6 +7,7 @@ import { ESTAGIOS } from '../../lib/funil'
 import { brtDataCurta } from '../../lib/brt'
 import PanelState, { SearchField } from '../ui/PanelState'
 import { IconeEditar, IconeExcluir, IconeWhatsApp } from '../ui/Icones'
+import DateField from '../ui/DateField'
 
 /**
  * Pacientes: lista a esquerda, ficha a direita.
@@ -249,7 +250,8 @@ function Ficha({ id, onFechar, onSalvou }) {
           </div>
           <div className="a-field">
             <label htmlFor="pf-nasc">Nascimento</label>
-            <input id="pf-nasc" type="date" {...campo('nascimento')} />
+            <DateField id="pf-nasc" value={dados.nascimento}
+              onChange={(v) => setDados((d) => ({ ...d, nascimento: v }))} />
           </div>
           <div className="a-field">
             <label htmlFor="pf-origem">Como conheceu</label>

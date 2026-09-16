@@ -278,8 +278,13 @@
 .a-btn--sm { padding: 0.375rem 0.75rem; font-size: 0.8125rem; }
 .a-btn--danger { color: var(--a-danger); border-color: rgba(164, 68, 58, 0.3); }
 
-.a-rowactions { display: flex; gap: 0.25rem; align-items: center; }
-.a-rowactions button {
+/* .a-rowactions e uma fileira de botao-icone quadradinho. O :not(.a-btn) e
+   obrigatorio: sem ele a regra vence o .a-btn por especificidade (0,2,0 contra
+   0,1,0) e qualquer botao de verdade posto aqui dentro virava um quadrado de
+   30px cinza — foi o que aconteceu com o "Salvar" da ficha, o de Horarios e os
+   do funil. Botao com rotulo continua sendo botao. */
+.a-rowactions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.a-rowactions button:not(.a-btn) {
   width: 1.875rem; height: 1.875rem;
   border-radius: 6px;
   border: 1px solid var(--a-line);
@@ -288,8 +293,8 @@
   color: var(--a-muted);
   transition: background 0.18s, color 0.18s;
 }
-.a-rowactions button:hover { background: rgba(26,26,26,0.05); color: var(--a-text); }
-.a-rowactions button.is-danger:hover { background: rgba(164,68,58,0.1); color: var(--a-danger); }
+.a-rowactions button:not(.a-btn):hover { background: rgba(26,26,26,0.05); color: var(--a-text); }
+.a-rowactions button:not(.a-btn).is-danger:hover { background: rgba(164,68,58,0.1); color: var(--a-danger); }
 
 /* ---- Grupos e listas ---- */
 .a-group {

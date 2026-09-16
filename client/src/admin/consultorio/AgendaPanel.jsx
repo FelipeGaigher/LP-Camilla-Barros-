@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
-  listarAgenda, listarPendentes, confirmarAgendamento, mudarStatusAgendamento,
-  buscarConfigAgenda, buscarProcedimentos,
+  listarAgenda, listarPendentes, buscarConfigAgenda, buscarProcedimentos,
 } from '../../data/agendaApi'
 import NovoAgendamento from './NovoAgendamento'
+import DetalheAgendamento from './DetalheAgendamento'
 import {
   brtParts, brtDayStart, brtTime, brtDataCurta, hojeBRT, somaDias, diffDias,
   nomeDiaSemana, nomeMes, matrizDoMes, minutosParaHora,
@@ -45,6 +45,7 @@ export default function AgendaPanel({ onIr }) {
   const [faixas, setFaixas] = useState([])
   const [procedimentos, setProcedimentos] = useState([])
   const [novo, setNovo] = useState(null) // { dia, hora } quando o painel esta aberto
+  const [detalhe, setDetalhe] = useState(null) // agendamento aberto no painel
   const [estado, setEstado] = useState('carregando')
   const [erro, setErro] = useState('')
 
@@ -141,22 +142,8 @@ export default function AgendaPanel({ onIr }) {
     setData(`${ano}-${String(mes).padStart(2, '0')}-01`)
   }
 
-  const confirmar = async (id) => {
-    const r = await confirmarAgendamento(id)
-    if (!r.ok) { setErro(r.error); return }
-    carregar()
-  }
-  const recusar = async (id, nome) => {
-    if (!confirm(`Recusar o pedido de ${nome || 'essa paciente'}? O horario volta a ficar livre.`)) return
-    const r = await mudarStatusAgendamento(id, 'cancelado', 'Recusado pelo consultorio')
-    if (!r.ok) { setErro(r.error); return }
-    carregar()
-  }
-  const marcar = async (id, status) => {
-    const r = await mudarStatusAgendamento(id, status)
-    if (!r.ok) { setErro(r.error); return }
-    carregar()
-  }
+  // Confirmar, recusar e marcar atendimento migraram pro painel de detalhe:
+  // e la que ela ja esta vendo o horario, e a grade ficou so com a leitura.
 
   const diaSel = brtParts(brtDayStart(data))
 
@@ -240,14 +227,18 @@ export default function AgendaPanel({ onIr }) {
                 regua={regua}
                 hoje={hoje}
                 umDiaSo={vista === 'dia'}
-                onMarcar={marcar}
-                onConfirmar={confirmar}
-                onRecusar={recusar}
                 onNovo={setNovo}
+                onAbrir={setDetalhe}
               />
             )}
           </div>
         </div>
+
+        <DetalheAgendamento
+          evento={detalhe}
+          onFechar={() => setDetalhe(null)}
+          onMudou={() => { setDetalhe(null); carregar() }}
+        />
 
         <NovoAgendamento
           aberto={!!novo}
@@ -269,7 +260,7 @@ export default function AgendaPanel({ onIr }) {
  * colisao so acontece com 'faltou'; mesmo assim o calculo de faixa existe, pra
  * dois cards nunca ficarem um por cima do outro.
  */
-function GradeTempo({ dias, eventos, regua, hoje, umDiaSo, onMarcar, onConfirmar, onRecusar, onNovo }) {
+function GradeTempo({ dias, eventos, regua, hoje, umDiaSo, onNovo, onAbrir }) {
   const totalLinhas = Math.max(1, (regua.fim - regua.inicio) / PASSO_MIN)
   const horas = []
   for (let m = regua.inicio; m < regua.fim; m += 60) horas.push(m)
@@ -350,7 +341,13 @@ function GradeTempo({ dias, eventos, regua, hoje, umDiaSo, onMarcar, onConfirmar
           const fim = Math.max(ini + 1, linha(minutosDoDia(e.fim)))
           const largura = 100 / (e._faixas || 1)
           return (
-            <article
+            // Botao, e nao article com onClick: o teclado alcanca e o leitor de
+            // tela anuncia como acionavel. E por isso que Confirmar, Atendeu e
+            // Faltou sairam daqui pro painel de detalhe — botao dentro de botao
+            // e HTML invalido, e quatro botoes por bloco viravam ruido numa
+            // grade que precisa ser lida de relance.
+            <button
+              type="button"
               key={e.id}
               className={`ag-ev is-${e.status}`}
               style={{
@@ -359,6 +356,7 @@ function GradeTempo({ dias, eventos, regua, hoje, umDiaSo, onMarcar, onConfirmar
                 width: `calc(${largura}% - 4px)`,
                 marginLeft: `${largura * (e._faixa || 0)}%`,
               }}
+              onClick={() => onAbrir(e)}
               title={`${brtTime(e.inicio)} · ${e.nome} · ${e.procedimento || ''}`}
             >
               <span className="ag-ev__hora">
@@ -369,25 +367,10 @@ function GradeTempo({ dias, eventos, regua, hoje, umDiaSo, onMarcar, onConfirmar
                   pra as tres vistas nao inventarem textos diferentes. */}
               <span className={`ag-ev__nome ${e.semPaciente ? 'is-vago' : ''}`}>{e.nome}</span>
               <span className="ag-ev__proc">{e.procedimento}</span>
-
-              {/* Pedido e confirmado aqui mesmo, e nao numa fila lateral: pra
-                  decidir, ela precisa ver o que tem em volta no dia. */}
-              {e.status === 'pendente' && (
-                <span className="ag-ev__acoes">
-                  <button type="button" onClick={() => onConfirmar(e.id)}>Confirmar</button>
-                  <button type="button" onClick={() => onRecusar(e.id, e.nome)}>Recusar</button>
-                </span>
-              )}
-              {e.status === 'confirmado' && (
-                <span className="ag-ev__acoes">
-                  <button type="button" onClick={() => onMarcar(e.id, 'realizado')}>Atendeu</button>
-                  <button type="button" onClick={() => onMarcar(e.id, 'faltou')}>Faltou</button>
-                </span>
-              )}
-              {e.status !== 'confirmado' && e.status !== 'pendente' && (
+              {e.status !== 'confirmado' && (
                 <span className="ag-ev__status">{STATUS_ROTULO[e.status]}</span>
               )}
-            </article>
+            </button>
           )
         })
       )}

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { criarAgendamento, listarPacientes, salvarPaciente } from '../../data/agendaApi'
 import { brtParts, brtDayStart, brtToInstant, minutosParaHora, horaParaMinutos, nomeDiaSemana, nomeMes } from '../../lib/brt'
 import { ESTAGIO_AO_CONFIRMAR } from '../../lib/funil'
+import DateField from '../ui/DateField'
 
 /**
  * Painel de novo agendamento, aberto pela propria agenda.
@@ -231,7 +232,7 @@ export default function NovoAgendamento({ aberto, inicial, procedimentos, onFech
           <div className="dr__linha">
             <div className="a-field">
               <label htmlFor="na-dia">Dia</label>
-              <input id="na-dia" type="date" value={dia} onChange={(e) => setDia(e.target.value)} required />
+              <DateField id="na-dia" value={dia} onChange={setDia} />
             </div>
             <div className="a-field">
               <label htmlFor="na-hora">Hora</label>
