@@ -1,116 +1,211 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   listarAgenda, listarPendentes, confirmarAgendamento, mudarStatusAgendamento,
+  buscarConfigAgenda,
 } from '../../data/agendaApi'
-import { brtDateKey, somaDias, hojeBRT, brtDataCurta, nomeDiaSemana, brtParts, brtTime } from '../../lib/brt'
+import {
+  brtParts, brtDayStart, brtTime, brtDataCurta, hojeBRT, somaDias, diffDias,
+  nomeDiaSemana, nomeMes, matrizDoMes, minutosParaHora,
+} from '../../lib/brt'
+import MiniCalendario, { inicioDaSemana } from '../ui/MiniCalendario'
 import PanelState from '../ui/PanelState'
 
 /**
- * Agenda da semana, com a fila de pedidos ao lado.
+ * Agenda em tres modos: dia, semana e mes.
  *
- * A fila fica aqui e nao numa tela propria porque confirmar exige ver o dia em
- * volta: "tem alguem as 14h?" e a primeira pergunta. Em duas telas separadas
- * ela confirmaria as cegas.
+ * A grade comeca no horario de atendimento configurado, nao a meia-noite. Uma
+ * regua de 00:00 as 23:00 gasta dois tercos da tela com horas em que ninguem
+ * atende, e obriga a rolar toda vez pra chegar nas 08:00.
  *
- * A grade rola com a pagina, sem scroller interno. E deliberado — cada
- * container que rola por dentro e uma briga a mais com altura, e aqui nao ha
- * ganho nenhum em ter duas barras de rolagem.
+ * A fila de pedidos fica ao lado da grade de proposito: confirmar exige ver o
+ * dia em volta. Em duas telas separadas ela confirmaria as cegas.
  */
 
+const PASSO_MIN = 30 // granularidade das linhas da grade
+const VISTAS = [
+  { id: 'dia', label: 'Dia' },
+  { id: 'semana', label: 'Semana' },
+  { id: 'mes', label: 'Mes' },
+]
+
 const STATUS_ROTULO = {
-  pendente: 'Pedido',
-  confirmado: 'Confirmado',
-  realizado: 'Atendido',
-  faltou: 'Faltou',
-  cancelado: 'Cancelado',
-  expirado: 'Expirado',
+  pendente: 'Pedido', confirmado: 'Confirmado', realizado: 'Atendido',
+  faltou: 'Faltou', cancelado: 'Cancelado', expirado: 'Expirado',
 }
 
-/** Segunda da semana de uma data, no calendario de Brasilia. */
-function inicioDaSemana(dataKey) {
-  const diaSemana = brtParts(new Date(`${dataKey}T12:00:00.000Z`)).diaSemana
-  // brtParts conta domingo como 0; a semana da Camilla comeca na segunda.
-  const recuo = diaSemana === 0 ? 6 : diaSemana - 1
-  return somaDias(dataKey, -recuo)
-}
+/** Minutos desde 00:00 BRT de um instante ISO. */
+const minutosDoDia = (iso) => brtParts(iso).minutosDoDia
 
 export default function AgendaPanel() {
-  const [semana, setSemana] = useState(() => inicioDaSemana(hojeBRT()))
+  const [vista, setVista] = useState('semana')
+  const [data, setData] = useState(() => hojeBRT())
   const [agendamentos, setAgendamentos] = useState([])
   const [pendentes, setPendentes] = useState([])
+  const [faixas, setFaixas] = useState([])
   const [estado, setEstado] = useState('carregando')
   const [erro, setErro] = useState('')
-  const [recusando, setRecusando] = useState(null)
-  const [motivo, setMotivo] = useState('')
 
-  const dias = useMemo(
-    () => Array.from({ length: 6 }, (_, i) => somaDias(semana, i)), // segunda a sabado
-    [semana]
-  )
+  const hoje = hojeBRT()
+
+  // Intervalo que a vista atual precisa carregar.
+  const periodo = useMemo(() => {
+    if (vista === 'dia') return { de: data, ate: data }
+    if (vista === 'semana') {
+      const seg = inicioDaSemana(data)
+      return { de: seg, ate: somaDias(seg, 6) }
+    }
+    const p = brtParts(brtDayStart(data))
+    const semanas = matrizDoMes(p.ano, p.mes)
+    return { de: semanas[0][0], ate: semanas[5][6] }
+  }, [vista, data])
 
   const carregar = useCallback(async () => {
     setEstado('carregando')
-    const [ag, pend] = await Promise.all([
-      listarAgenda({ de: dias[0], ate: dias[dias.length - 1] }),
+    const [ag, pend, cfg] = await Promise.all([
+      listarAgenda(periodo),
       listarPendentes(),
+      buscarConfigAgenda(),
     ])
-    if (!ag.ok) {
-      setErro(ag.error)
-      setEstado('erro')
-      return
-    }
+    if (!ag.ok) { setErro(ag.error); setEstado('erro'); return }
     setAgendamentos(ag.data.agendamentos)
     setPendentes(pend.ok ? pend.data.pendentes : [])
+    if (cfg.ok) setFaixas(cfg.data.faixas || [])
     setEstado('pronto')
-  }, [dias])
+  }, [periodo])
 
   useEffect(() => { carregar() }, [carregar])
 
-  const porDia = useMemo(() => {
-    const mapa = new Map(dias.map((d) => [d, []]))
-    for (const a of agendamentos) {
-      if (a.status === 'cancelado' || a.status === 'expirado') continue
-      if (mapa.has(a.dia)) mapa.get(a.dia).push(a)
+  // Cancelado e expirado nao ocupam a cadeira, entao nao aparecem na grade.
+  const visiveis = useMemo(
+    () => agendamentos.filter((a) => a.status !== 'cancelado' && a.status !== 'expirado'),
+    [agendamentos]
+  )
+
+  const comEvento = useMemo(() => new Set(visiveis.map((a) => a.dia)), [visiveis])
+
+  /**
+   * Limites da regua, tirados do horario de atendimento. Sem faixa configurada
+   * cai num padrao comercial — a tela precisa funcionar antes de a Camilla
+   * preencher a configuracao.
+   */
+  const regua = useMemo(() => {
+    const ativas = faixas.filter((f) => f.ativo !== false)
+    if (ativas.length === 0) return { inicio: 480, fim: 1140 } // 08:00-19:00
+    const inicio = Math.min(...ativas.map((f) => Number(f.abre_min)))
+    const fim = Math.max(...ativas.map((f) => Number(f.fecha_min)))
+    // Arredonda pra hora cheia e sobra meia hora em cima, pro encaixe fora do
+    // expediente nao ficar espremido contra a borda.
+    return { inicio: Math.floor(inicio / 60) * 60, fim: Math.min(1440, Math.ceil(fim / 60) * 60 + 30) }
+  }, [faixas])
+
+  /** Dias da vista de semana: esconde o que nao tem atendimento nem evento. */
+  const diasDaSemana = useMemo(() => {
+    if (vista !== 'semana') return []
+    const seg = inicioDaSemana(data)
+    const todos = Array.from({ length: 7 }, (_, i) => somaDias(seg, i))
+    const diasAtivos = new Set(faixas.filter((f) => f.ativo !== false).map((f) => Number(f.dia_semana)))
+    const filtrados = todos.filter((d) => {
+      const ds = brtParts(brtDayStart(d)).diaSemana
+      return diasAtivos.has(ds) || comEvento.has(d) || d === hoje
+    })
+    // Configuracao vazia nao pode zerar a semana inteira.
+    return filtrados.length > 0 ? filtrados : todos.slice(0, 6)
+  }, [vista, data, faixas, comEvento, hoje])
+
+  const rotuloPeriodo = useMemo(() => {
+    if (vista === 'dia') {
+      const p = brtParts(brtDayStart(data))
+      return `${nomeDiaSemana(p.diaSemana)}, ${p.dia} de ${nomeMes(p.mes)} de ${p.ano}`
     }
-    return mapa
-  }, [agendamentos, dias])
+    if (vista === 'semana') {
+      return `${brtDataCurta(`${periodo.de}T12:00:00Z`)} a ${brtDataCurta(`${periodo.ate}T12:00:00Z`)}`
+    }
+    const p = brtParts(brtDayStart(data))
+    return `${nomeMes(p.mes)} de ${p.ano}`
+  }, [vista, data, periodo])
+
+  const andar = (n) => {
+    if (vista === 'dia') return setData(somaDias(data, n))
+    if (vista === 'semana') return setData(somaDias(data, n * 7))
+    const p = brtParts(brtDayStart(data))
+    const total = p.mes - 1 + n
+    const ano = p.ano + Math.floor(total / 12)
+    const mes = ((total % 12) + 12) % 12 + 1
+    setData(`${ano}-${String(mes).padStart(2, '0')}-01`)
+  }
 
   const confirmar = async (id) => {
     const r = await confirmarAgendamento(id)
     if (!r.ok) { setErro(r.error); return }
     carregar()
   }
-
-  const recusar = async (id) => {
-    const r = await mudarStatusAgendamento(id, 'cancelado', motivo || 'Recusado pelo consultorio')
-    setRecusando(null)
-    setMotivo('')
+  const recusar = async (id, nome) => {
+    if (!confirm(`Recusar o pedido de ${nome || 'essa paciente'}? O horario volta a ficar livre.`)) return
+    const r = await mudarStatusAgendamento(id, 'cancelado', 'Recusado pelo consultorio')
     if (!r.ok) { setErro(r.error); return }
     carregar()
   }
-
   const marcar = async (id, status) => {
     const r = await mudarStatusAgendamento(id, status)
     if (!r.ok) { setErro(r.error); return }
     carregar()
   }
 
-  const hoje = hojeBRT()
+  /** Leva a agenda ate o pedido mais antigo, que pode estar fora da vista. */
+  const irAoPedido = () => {
+    if (pendentes.length === 0) return
+    const alvo = [...pendentes].sort((a, b) => new Date(a.inicio) - new Date(b.inicio))[0]
+    setData(alvo.dia)
+    setVista('dia')
+  }
+
+  const diaSel = brtParts(brtDayStart(data))
 
   return (
     <div className="a-editor">
-      <header className="a-editor__head">
-        <div>
-          <h1>Agenda</h1>
-          <p className="a-hint">
-            Semana de {brtDataCurta(`${dias[0]}T12:00:00Z`)} a {brtDataCurta(`${dias[5]}T12:00:00Z`)}
-          </p>
+      <header className="ag-barra">
+        <div className="ag-barra__data">
+          <span className="ag-chip" aria-hidden="true">
+            <small>{nomeDiaSemana(diaSel.diaSemana, { curto: true })}</small>
+            <strong>{String(diaSel.dia).padStart(2, '0')}</strong>
+          </span>
+          <button type="button" className="a-btn a-btn--sm" onClick={() => setData(hoje)}>Hoje</button>
+          <div className="a-rowactions">
+            <button type="button" onClick={() => andar(-1)} aria-label="Periodo anterior">&lsaquo;</button>
+            <button type="button" onClick={() => andar(1)} aria-label="Proximo periodo">&rsaquo;</button>
+          </div>
+          <h1 className="ag-barra__titulo">{rotuloPeriodo}</h1>
         </div>
-        <div className="a-editor__actions">
-          <button className="a-btn a-btn--sm" onClick={() => setSemana(somaDias(semana, -7))}>&larr; Anterior</button>
-          <button className="a-btn a-btn--sm" onClick={() => setSemana(inicioDaSemana(hoje))}>Hoje</button>
-          <button className="a-btn a-btn--sm" onClick={() => setSemana(somaDias(semana, 7))}>Seguinte &rarr;</button>
-          <button className="a-btn" onClick={carregar}>Atualizar</button>
+
+        <div className="ag-barra__acoes">
+          {/* A fila lateral saiu: pedido tem horario escolhido, entao ja aparece
+              na grade e e confirmado ali, olhando o dia em volta. O que este
+              contador resolve e o pedido fora do periodo visivel — sem ele, um
+              pedido pro mes que vem ficaria invisivel. */}
+          {pendentes.length > 0 && (
+            <button
+              type="button"
+              className="ag-pedidos"
+              onClick={() => irAoPedido()}
+              title="Ir ate o pedido mais antigo"
+            >
+              {pendentes.length} {pendentes.length === 1 ? 'pedido' : 'pedidos'}
+            </button>
+          )}
+          <button className="a-btn a-btn--sm" onClick={carregar}>Atualizar</button>
+          <div className="ag-vistas" role="tablist" aria-label="Como ver a agenda">
+            {VISTAS.map((v) => (
+              <button
+                key={v.id}
+                role="tab"
+                aria-selected={vista === v.id}
+                className={`ag-vistas__item ${vista === v.id ? 'is-active' : ''}`}
+                onClick={() => setVista(v.id)}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
         </div>
       </header>
 
@@ -118,105 +213,205 @@ export default function AgendaPanel() {
 
       <PanelState estado={estado} erro={erro} onTentarDeNovo={carregar}>
         <div className="ag-layout">
-          <div className="ag-semana">
-            {dias.map((dia) => {
-              const lista = porDia.get(dia) || []
-              const partes = brtParts(new Date(`${dia}T12:00:00.000Z`))
-              return (
-                <section key={dia} className={`ag-dia ${dia === hoje ? 'is-hoje' : ''}`}>
-                  <header className="ag-dia__head">
-                    <span className="ag-dia__semana">{nomeDiaSemana(partes.diaSemana, { curto: true })}</span>
-                    <span className="ag-dia__numero">{String(partes.dia).padStart(2, '0')}</span>
-                  </header>
-                  <div className="ag-dia__corpo">
-                    {lista.length === 0 && <p className="ag-dia__vazio">—</p>}
-                    {lista.map((a) => (
-                      <article key={a.id} className={`ag-item is-${a.status}`}>
-                        <span className="ag-item__hora">{brtTime(a.inicio)}</span>
-                        <span className="ag-item__nome">{a.nome || 'Sem nome'}</span>
-                        <span className="ag-item__proc">{a.procedimento}</span>
-                        {a.alerta && <span className="ag-item__alerta" title={a.alerta}>!</span>}
-                        {a.status === 'confirmado' && (
-                          <div className="ag-item__acoes">
-                            <button type="button" onClick={() => marcar(a.id, 'realizado')}>Atendeu</button>
-                            <button type="button" onClick={() => marcar(a.id, 'faltou')}>Faltou</button>
-                          </div>
-                        )}
-                        {a.status !== 'confirmado' && (
-                          <span className="ag-item__status">{STATUS_ROTULO[a.status]}</span>
-                        )}
-                      </article>
-                    ))}
-                  </div>
-                </section>
-              )
-            })}
-          </div>
-
-          <aside className="ag-fila">
-            <header className="ag-fila__head">
-              <h2>Pedidos</h2>
-              <span className="k-col__conta">{pendentes.length}</span>
-            </header>
-
-            {pendentes.length === 0 && <p className="a-hint">Nenhum pedido aguardando.</p>}
-
-            <ul className="ag-fila__lista">
-              {pendentes.map((p) => (
-                <li key={p.id} className="ag-pend">
-                  <strong>{p.nome}</strong>
-                  <p className="ag-pend__quando">{p.rotulo}</p>
-                  <p className="a-hint">
-                    {p.procedimento}
-                    {p.primeiraConsulta ? ' · primeira vez' : ''}
-                  </p>
-                  {p.mensagem && <p className="ag-pend__msg">{p.mensagem}</p>}
-                  {p.sugestaoPaciente && (
-                    <p className="a-hint">Ja e paciente: {p.sugestaoPaciente.nome}</p>
-                  )}
-
-                  {recusando === p.id ? (
-                    <div className="ag-pend__recusa">
-                      <label className="a-field">
-                        <span className="sr-only">Motivo da recusa</span>
-                        <input
-                          type="text"
-                          value={motivo}
-                          placeholder="Motivo (opcional)"
-                          onChange={(e) => setMotivo(e.target.value)}
-                        />
-                      </label>
-                      <div className="a-rowactions">
-                        <button className="a-btn a-btn--sm a-btn--danger" onClick={() => recusar(p.id)}>
-                          Confirmar recusa
-                        </button>
-                        <button className="a-btn a-btn--sm" onClick={() => setRecusando(null)}>Voltar</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="ag-pend__acoes">
-                      <button className="a-btn a-btn--sm a-btn--primary" onClick={() => confirmar(p.id)}>
-                        Confirmar
-                      </button>
-                      <button className="a-btn a-btn--sm" onClick={() => setRecusando(p.id)}>Recusar</button>
-                      {p.telefone && (
-                        <a
-                          className="a-btn a-btn--sm"
-                          href={`https://wa.me/${String(p.telefone).replace(/\D/g, '')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          WhatsApp
-                        </a>
-                      )}
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
+          {/* Calendario a esquerda, como na referencia. Nada mais mora no rail:
+              a fila de pedidos saiu porque ocupava um terco da tela repetindo o
+              que a grade ja mostra. */}
+          <aside className="ag-rail">
+            <MiniCalendario selecionado={data} onSelecionar={setData} marcados={comEvento} />
           </aside>
+
+          <div className="ag-principal">
+            {vista === 'mes' ? (
+              <GradeMes
+                ancora={data}
+                eventos={visiveis}
+                hoje={hoje}
+                onAbrirDia={(d) => { setData(d); setVista('dia') }}
+              />
+            ) : (
+              <GradeTempo
+                dias={vista === 'dia' ? [data] : diasDaSemana}
+                eventos={visiveis}
+                regua={regua}
+                hoje={hoje}
+                umDiaSo={vista === 'dia'}
+                onMarcar={marcar}
+                onConfirmar={confirmar}
+                onRecusar={recusar}
+              />
+            )}
+          </div>
         </div>
       </PanelState>
+    </div>
+  )
+}
+
+/**
+ * Grade de horas — dia e semana usam a mesma, mudando so o numero de colunas.
+ *
+ * Cada evento e posicionado por gridRow calculado do horario. A constraint do
+ * banco impede sobreposicao entre pendente, confirmado e realizado, entao
+ * colisao so acontece com 'faltou'; mesmo assim o calculo de faixa existe, pra
+ * dois cards nunca ficarem um por cima do outro.
+ */
+function GradeTempo({ dias, eventos, regua, hoje, umDiaSo, onMarcar, onConfirmar, onRecusar }) {
+  const totalLinhas = Math.max(1, (regua.fim - regua.inicio) / PASSO_MIN)
+  const horas = []
+  for (let m = regua.inicio; m < regua.fim; m += 60) horas.push(m)
+
+  const linha = (minutos) =>
+    Math.min(totalLinhas, Math.max(0, Math.round((minutos - regua.inicio) / PASSO_MIN)))
+
+  const porDia = useMemo(() => {
+    const mapa = new Map(dias.map((d) => [d, []]))
+    for (const e of eventos) if (mapa.has(e.dia)) mapa.get(e.dia).push(e)
+    for (const lista of mapa.values()) {
+      lista.sort((a, b) => new Date(a.inicio) - new Date(b.inicio))
+      // Faixas: evento que comeca antes de o anterior terminar vai pra faixa
+      // seguinte, em vez de sobrepor.
+      const fins = []
+      for (const e of lista) {
+        const ini = minutosDoDia(e.inicio)
+        let f = fins.findIndex((fim) => fim <= ini)
+        if (f === -1) { f = fins.length; fins.push(0) }
+        fins[f] = minutosDoDia(e.fim)
+        e._faixa = f
+        e._faixas = fins.length
+      }
+      for (const e of lista) e._faixas = fins.length
+    }
+    return mapa
+  }, [dias, eventos])
+
+  return (
+    <div
+      className={`ag-grade ${umDiaSo ? 'is-dia' : ''}`}
+      style={{ '--linhas': totalLinhas, '--colunas': dias.length }}
+    >
+      <div className="ag-grade__canto" />
+      {dias.map((dia) => {
+        const p = brtParts(brtDayStart(dia))
+        return (
+          <header key={dia} className={`ag-grade__dia ${dia === hoje ? 'is-hoje' : ''}`}>
+            <span className="ag-grade__dow">{nomeDiaSemana(p.diaSemana, { curto: true })}</span>
+            <span className="ag-grade__num">{String(p.dia).padStart(2, '0')}</span>
+          </header>
+        )
+      })}
+
+      {horas.map((m) => (
+        <span
+          key={m}
+          className="ag-grade__hora"
+          style={{ gridRow: `${linha(m) + 2} / span 2` }}
+        >
+          {minutosParaHora(m)}
+        </span>
+      ))}
+
+      {/* Fundo: uma celula por hora, so pra desenhar as linhas. */}
+      {dias.map((dia, ci) =>
+        horas.map((m) => (
+          <div
+            key={`${dia}-${m}`}
+            className="ag-grade__celula"
+            style={{ gridColumn: ci + 2, gridRow: `${linha(m) + 2} / span 2` }}
+          />
+        ))
+      )}
+
+      {dias.map((dia, ci) =>
+        (porDia.get(dia) || []).map((e) => {
+          const ini = linha(minutosDoDia(e.inicio))
+          const fim = Math.max(ini + 1, linha(minutosDoDia(e.fim)))
+          const largura = 100 / (e._faixas || 1)
+          return (
+            <article
+              key={e.id}
+              className={`ag-ev is-${e.status}`}
+              style={{
+                gridColumn: ci + 2,
+                gridRow: `${ini + 2} / ${fim + 2}`,
+                width: `calc(${largura}% - 4px)`,
+                marginLeft: `${largura * (e._faixa || 0)}%`,
+              }}
+              title={`${brtTime(e.inicio)} · ${e.nome} · ${e.procedimento || ''}`}
+            >
+              <span className="ag-ev__hora">
+                {brtTime(e.inicio)}
+                {e.primeiraConsulta && <em className="ag-ev__primeira" title="Primeira consulta">1a</em>}
+              </span>
+              <span className="ag-ev__nome">{e.nome || 'Sem nome'}</span>
+              <span className="ag-ev__proc">{e.procedimento}</span>
+
+              {/* Pedido e confirmado aqui mesmo, e nao numa fila lateral: pra
+                  decidir, ela precisa ver o que tem em volta no dia. */}
+              {e.status === 'pendente' && (
+                <span className="ag-ev__acoes">
+                  <button type="button" onClick={() => onConfirmar(e.id)}>Confirmar</button>
+                  <button type="button" onClick={() => onRecusar(e.id, e.nome)}>Recusar</button>
+                </span>
+              )}
+              {e.status === 'confirmado' && (
+                <span className="ag-ev__acoes">
+                  <button type="button" onClick={() => onMarcar(e.id, 'realizado')}>Atendeu</button>
+                  <button type="button" onClick={() => onMarcar(e.id, 'faltou')}>Faltou</button>
+                </span>
+              )}
+              {e.status !== 'confirmado' && e.status !== 'pendente' && (
+                <span className="ag-ev__status">{STATUS_ROTULO[e.status]}</span>
+              )}
+            </article>
+          )
+        })
+      )}
+    </div>
+  )
+}
+
+/** Mes: a matriz ja existe no helper de fuso, aqui e so distribuir os eventos. */
+function GradeMes({ ancora, eventos, hoje, onAbrirDia }) {
+  const p = brtParts(brtDayStart(ancora))
+  const semanas = useMemo(() => matrizDoMes(p.ano, p.mes), [p.ano, p.mes])
+  const prefixo = `${p.ano}-${String(p.mes).padStart(2, '0')}`
+
+  const porDia = useMemo(() => {
+    const mapa = new Map()
+    for (const e of eventos) {
+      if (!mapa.has(e.dia)) mapa.set(e.dia, [])
+      mapa.get(e.dia).push(e)
+    }
+    for (const l of mapa.values()) l.sort((a, b) => new Date(a.inicio) - new Date(b.inicio))
+    return mapa
+  }, [eventos])
+
+  return (
+    <div className="ag-mes">
+      {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].map((d) => (
+        <span className="ag-mes__dow" key={d}>{d}</span>
+      ))}
+
+      {semanas.flat().map((dia) => {
+        const lista = porDia.get(dia) || []
+        const foraDoMes = !dia.startsWith(prefixo)
+        return (
+          <button
+            type="button"
+            key={dia}
+            className={`ag-mes__cel ${foraDoMes ? 'is-fora' : ''} ${dia === hoje ? 'is-hoje' : ''}`}
+            onClick={() => onAbrirDia(dia)}
+          >
+            <span className="ag-mes__num">{Number(dia.slice(8))}</span>
+            {lista.slice(0, 3).map((e) => (
+              <span key={e.id} className={`ag-mes__pill is-${e.status}`}>
+                {brtTime(e.inicio)} {e.nome}
+              </span>
+            ))}
+            {lista.length > 3 && <span className="ag-mes__mais">+{lista.length - 3}</span>}
+          </button>
+        )
+      })}
     </div>
   )
 }

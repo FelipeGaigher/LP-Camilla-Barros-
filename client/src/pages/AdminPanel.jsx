@@ -31,6 +31,11 @@ export default function AdminPanel() {
   const [espaco, setEspaco] = useState(ESPACO_PADRAO)
   const [active, setActive] = useState(() => primeiroItem(ESPACO_PADRAO))
   const [menuOpen, setMenuOpen] = useState(false)
+  // Recolher fica gravado: quem trabalha o dia todo na agenda quer a tela
+  // inteira, e ter que recolher a cada F5 viraria ruido diario.
+  const [recolhida, setRecolhida] = useState(
+    () => typeof localStorage !== 'undefined' && localStorage.getItem('painel-sidebar') === 'recolhida'
+  )
   const [previewOpen, setPreviewOpen] = useState(true)
   const [draft, setDraft] = useState(null)
   const [focusPath, setFocusPath] = useState(null)
@@ -69,11 +74,40 @@ export default function AdminPanel() {
     return () => window.removeEventListener('message', onMsg)
   }, [])
 
+  const recolher = useCallback((valor) => {
+    setRecolhida(valor)
+    try { localStorage.setItem('painel-sidebar', valor ? 'recolhida' : 'aberta') } catch { /* modo anonimo */ }
+  }, [])
+
   return (
-    <div className="a-shell">
+    <div className={`a-shell ${recolhida ? 'is-recolhida' : ''}`}>
+      {/* Reabrir: so existe com a barra recolhida, encostado na borda. */}
+      {recolhida && (
+        <button
+          type="button"
+          className="a-reabrir"
+          onClick={() => recolher(false)}
+          aria-label="Mostrar o menu"
+          title="Mostrar o menu"
+        >
+          &rsaquo;
+        </button>
+      )}
+
       <aside className={`a-sidebar ${menuOpen ? 'is-open' : ''}`}>
         <div className="a-sidebar__top">
-          <span className="a-sidebar__brand">Painel</span>
+          <div className="a-sidebar__titulo">
+            <span className="a-sidebar__brand">Painel</span>
+            <button
+              type="button"
+              className="a-recolher"
+              onClick={() => recolher(true)}
+              aria-label="Recolher o menu"
+              title="Recolher o menu"
+            >
+              &lsaquo;
+            </button>
+          </div>
           <Link className="a-sidebar__view" to="/" target="_blank">Ver o site</Link>
         </div>
 
