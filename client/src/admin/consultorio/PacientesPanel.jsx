@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import {
   listarPacientes, buscarFicha, salvarPaciente, registrarAtendimento, arquivarCard,
+  apagarPaciente,
 } from '../../data/agendaApi'
 import { ESTAGIOS } from '../../lib/funil'
 import { brtDataCurta } from '../../lib/brt'
@@ -38,6 +39,31 @@ export default function PacientesPanel() {
     return () => clearTimeout(t)
   }, [busca, carregar])
 
+  /**
+   * Exclusao a pedido da titular (LGPD art. 18).
+   *
+   * Nao derruba a linha: anonimiza. O agendamento passado precisa continuar
+   * existindo pra agenda nao ficar com buraco, mas nada nele identifica mais
+   * ninguem. Por ser irreversivel, a confirmacao diz o que vai acontecer em
+   * vez de perguntar "tem certeza?".
+   */
+  const excluir = useCallback(
+    async (p) => {
+      const ok = confirm(
+        `Excluir os dados de ${p.nome}?\n\n` +
+          'Nome, telefone, e-mail, observacoes e o que foi anotado nos atendimentos ' +
+          'sao apagados. Os horarios passados continuam na agenda, sem identificacao.\n\n' +
+          'Isso nao tem volta.'
+      )
+      if (!ok) return
+      const r = await apagarPaciente(p.id)
+      if (!r.ok) { setErro(r.error); return }
+      if (selecionado === p.id) setSelecionado(null)
+      carregar(busca)
+    },
+    [busca, carregar, selecionado]
+  )
+
   return (
     <div className="a-editor">
       <header className="a-editor__head">
@@ -53,31 +79,67 @@ export default function PacientesPanel() {
       </header>
 
       <div className={`p-master ${selecionado ? 'tem-ficha' : ''}`}>
-        <div className="p-lista">
-          <SearchField valor={busca} onChange={setBusca} placeholder="Buscar por nome ou telefone" />
+        <div className="a-card p-lista">
+          <div className="a-card__head">
+            <strong>
+              {estado === 'pronto' ? `${lista.length} ${lista.length === 1 ? 'paciente' : 'pacientes'}` : 'Pacientes'}
+            </strong>
+          </div>
 
-          <PanelState
-            estado={estado === 'pronto' && lista.length === 0 ? 'vazio' : estado}
-            erro={erro}
-            vazio={busca ? 'Ninguem com esse nome.' : 'Nenhuma paciente cadastrada ainda.'}
-            onTentarDeNovo={() => carregar(busca)}
-          >
-            <ul className="p-lista__itens">
-              {lista.map((p) => (
-                <li key={p.id}>
-                  <button
-                    type="button"
-                    className={`p-lista__item ${selecionado === p.id ? 'is-active' : ''}`}
-                    onClick={() => setSelecionado(p.id)}
-                  >
-                    <strong>{p.nome}</strong>
-                    <span className="a-hint">{p.telefone || 'sem telefone'}</span>
-                    {p.alerta && <span className="p-lista__alerta" title={p.alerta}>!</span>}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </PanelState>
+          <div className="a-card__body p-lista__corpo">
+            <SearchField valor={busca} onChange={setBusca} placeholder="Buscar por nome ou telefone" />
+
+            <PanelState
+              estado={estado === 'pronto' && lista.length === 0 ? 'vazio' : estado}
+              erro={erro}
+              vazio={busca ? 'Ninguem com esse nome.' : 'Nenhuma paciente cadastrada ainda.'}
+              onTentarDeNovo={() => carregar(busca)}
+            >
+              <ul className="p-lista__itens">
+                {lista.map((p) => {
+                  const zap = p.telefone ? `https://wa.me/${String(p.telefone).replace(/\D/g, '')}` : null
+                  return (
+                    <li key={p.id} className={`p-linha ${selecionado === p.id ? 'is-active' : ''}`}>
+                      <button
+                        type="button"
+                        className="p-linha__quem"
+                        onClick={() => setSelecionado(p.id)}
+                      >
+                        <strong>{p.nome}</strong>
+                        <span className="a-hint">
+                          {p.telefone || 'sem telefone'}
+                          {p.situacao ? ` · ${ESTAGIOS.find((e) => e.id === p.situacao)?.label || p.situacao}` : ''}
+                        </span>
+                        {p.alerta && <span className="p-linha__alerta" title={p.alerta}>!</span>}
+                      </button>
+
+                      {/* As acoes ficam a vista, e nao escondidas atras de abrir
+                          a ficha: quem procura uma paciente na lista quase
+                          sempre quer uma dessas tres coisas. */}
+                      <div className="a-rowactions p-linha__acoes">
+                        <button type="button" onClick={() => setSelecionado(p.id)} title="Abrir e editar">
+                          Editar
+                        </button>
+                        {zap && (
+                          <a href={zap} target="_blank" rel="noopener noreferrer" title="Abrir no WhatsApp">
+                            WhatsApp
+                          </a>
+                        )}
+                        <button
+                          type="button"
+                          className="is-danger"
+                          onClick={() => excluir(p)}
+                          title="Excluir os dados da paciente"
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            </PanelState>
+          </div>
         </div>
 
         {selecionado && (

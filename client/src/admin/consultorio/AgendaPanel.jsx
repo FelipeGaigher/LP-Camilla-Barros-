@@ -37,7 +37,7 @@ const STATUS_ROTULO = {
 /** Minutos desde 00:00 BRT de um instante ISO. */
 const minutosDoDia = (iso) => brtParts(iso).minutosDoDia
 
-export default function AgendaPanel() {
+export default function AgendaPanel({ onIr }) {
   const [vista, setVista] = useState('semana')
   const [data, setData] = useState(() => hojeBRT())
   const [agendamentos, setAgendamentos] = useState([])
@@ -158,14 +158,6 @@ export default function AgendaPanel() {
     carregar()
   }
 
-  /** Leva a agenda ate o pedido mais antigo, que pode estar fora da vista. */
-  const irAoPedido = () => {
-    if (pendentes.length === 0) return
-    const alvo = [...pendentes].sort((a, b) => new Date(a.inicio) - new Date(b.inicio))[0]
-    setData(alvo.dia)
-    setVista('dia')
-  }
-
   const diaSel = brtParts(brtDayStart(data))
 
   return (
@@ -185,16 +177,16 @@ export default function AgendaPanel() {
         </div>
 
         <div className="ag-barra__acoes">
-          {/* A fila lateral saiu: pedido tem horario escolhido, entao ja aparece
-              na grade e e confirmado ali, olhando o dia em volta. O que este
-              contador resolve e o pedido fora do periodo visivel — sem ele, um
-              pedido pro mes que vem ficaria invisivel. */}
+          {/* Leva ao funil, e nao ao dia do pedido: o funil e onde ela ve tudo
+              que chegou — pedido de horario, contato do formulario e paciente
+              parada — na mesma tela. Pular pro dia mostraria um pedido de cada
+              vez e esconderia o resto. */}
           {pendentes.length > 0 && (
             <button
               type="button"
               className="ag-pedidos"
-              onClick={() => irAoPedido()}
-              title="Ir ate o pedido mais antigo"
+              onClick={() => onIr?.('funil')}
+              title="Ver no funil"
             >
               {pendentes.length} {pendentes.length === 1 ? 'pedido' : 'pedidos'}
             </button>

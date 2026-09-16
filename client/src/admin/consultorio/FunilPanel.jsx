@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { buscarFunil, moverCard, arquivarCard, salvarPaciente } from '../../data/agendaApi'
+import {
+  buscarFunil, moverCard, arquivarCard, salvarPaciente,
+  confirmarAgendamento, mudarStatusAgendamento,
+} from '../../data/agendaApi'
 import PanelState from '../ui/PanelState'
 
 /**
@@ -80,6 +83,34 @@ export default function FunilPanel() {
       if (card.tipo !== 'paciente') carregar()
     },
     [colunas, carregar]
+  )
+
+  /**
+   * Confirma o pedido de horario sem sair do funil.
+   *
+   * O card ja traz dia e hora; mandar ela pra agenda so pra clicar em
+   * Confirmar seria ida e volta sem ganho. Confirmar tambem cria a paciente e
+   * move o card pra Avaliacao — e por isso que recarrega o quadro depois.
+   */
+  const confirmarPedido = useCallback(
+    async (card) => {
+      setSalvando(`${card.tipo}:${card.id}`)
+      const r = await confirmarAgendamento(card.id)
+      setSalvando(null)
+      if (!r.ok) { setErro(r.error); return }
+      carregar()
+    },
+    [carregar]
+  )
+
+  const recusarPedido = useCallback(
+    async (card) => {
+      if (!confirm(`Recusar o pedido de ${card.nome}? O horario volta a ficar livre.`)) return
+      const r = await mudarStatusAgendamento(card.id, 'cancelado', 'Recusado pelo consultorio')
+      if (!r.ok) { setErro(r.error); return }
+      carregar()
+    },
+    [carregar]
   )
 
   const arquivar = useCallback(
@@ -169,6 +200,8 @@ export default function FunilPanel() {
                     salvando={salvando === `${card.tipo}:${card.id}`}
                     onMover={mover}
                     onArquivar={arquivar}
+                    onConfirmar={confirmarPedido}
+                    onRecusar={recusarPedido}
                   />
                 ))}
               </div>
@@ -234,8 +267,12 @@ function NovoCard({ estagio, onCancelar, onCriado, onErro }) {
   )
 }
 
-function Card({ card, colunas, salvando, onMover, onArquivar }) {
+function Card({ card, colunas, salvando, onMover, onArquivar, onConfirmar, onRecusar }) {
   const zap = card.telefone ? `https://wa.me/${String(card.telefone).replace(/\D/g, '')}` : null
+  // Pedido de horario segura a agenda enquanto nao for respondido, entao ele
+  // tem acao propria aqui — confirmar de dentro do funil evita a ida e volta
+  // pra agenda so pra clicar num botao.
+  const ehPedido = card.tipo === 'pedido'
 
   return (
     <article
@@ -258,6 +295,18 @@ function Card({ card, colunas, salvando, onMover, onArquivar }) {
       {card.detalhe && <p className="k-card__detalhe">{card.detalhe}</p>}
 
       {card.aviso && <p className="k-card__aviso">{card.aviso}</p>}
+
+      {ehPedido && (
+        <div className="k-card__pedido">
+          <button type="button" className="a-btn a-btn--sm a-btn--primary" disabled={salvando}
+            onClick={() => onConfirmar(card)}>
+            Confirmar
+          </button>
+          <button type="button" className="a-btn a-btn--sm" onClick={() => onRecusar(card)}>
+            Recusar
+          </button>
+        </div>
+      )}
 
       <div className="k-card__rodape">
         <span className="k-card__tempo">{card.tempo}</span>

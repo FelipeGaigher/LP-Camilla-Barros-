@@ -153,7 +153,9 @@ export default function AdminPanel() {
         <main className={`a-main ${Custom ? 'a-main--wide' : ''}`}>
           {syncing && <div className="a-syncing">Sincronizando...</div>}
           {Custom ? (
-            <Custom />
+            // onIr deixa uma tela mandar pra outra sem o painel virar roteado:
+            // o contador de pedidos da agenda precisa levar ao funil.
+            <Custom onIr={setActive} />
           ) : (
             <SectionEditor sectionKey={active} onDraftChange={onDraftChange} focusPath={focusPath} />
           )}
