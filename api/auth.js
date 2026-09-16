@@ -152,7 +152,7 @@ async function forgotPassword(req, res) {
   `
 
   const base = (process.env.APP_URL || '').replace(/\/$/, '')
-  const resetUrl = `${base}/admin/login?reset=${token}`
+  const resetUrl = `${base}/gestao/login?reset=${token}`
   const { subject, htmlContent, textContent } = passwordResetEmail({ username: user.username, resetUrl })
   await sendBrevoEmail({ to: user.email, subject, htmlContent, textContent })
 

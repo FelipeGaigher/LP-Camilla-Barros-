@@ -1,14 +1,57 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useNavigate, useSearchParams, Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { forgotPasswordApi, resetPasswordApi } from '../data/api'
+import { IconeOlho, IconeOlhoRiscado } from '../admin/ui/Icones'
 import '../styles/admin.css'
+
+/**
+ * Campo de senha com o olho de ver.
+ *
+ * Trocar `type` entre password e text mantem a aparencia: o admin.css estiliza
+ * por atributo e os dois tipos estao na lista de seletores.
+ *
+ * O botao nasce fora da ordem do Tab. Quem navega por teclado quer sair da
+ * senha direto para o Entrar; um passo extra num botao decorativo atrapalha
+ * mais do que ajuda, e o campo continua acessivel pelo mouse e pelo toque.
+ */
+function CampoSenha({ label, valor, onChange, autoComplete, autoFocus, children }) {
+  const id = useId()
+  const [visivel, setVisivel] = useState(false)
+
+  return (
+    <div className="a-field">
+      <label htmlFor={id}>{label}</label>
+      <div className="a-senha">
+        <input
+          id={id}
+          type={visivel ? 'text' : 'password'}
+          value={valor}
+          onChange={(e) => onChange(e.target.value)}
+          autoComplete={autoComplete}
+          autoFocus={autoFocus}
+        />
+        <button
+          type="button"
+          className="a-senha__olho"
+          onClick={() => setVisivel((v) => !v)}
+          tabIndex={-1}
+          aria-label={visivel ? 'Esconder a senha' : 'Mostrar a senha'}
+          title={visivel ? 'Esconder a senha' : 'Mostrar a senha'}
+        >
+          {visivel ? <IconeOlhoRiscado size={18} /> : <IconeOlho size={18} />}
+        </button>
+      </div>
+      {children}
+    </div>
+  )
+}
 
 /**
  * Tres telas no mesmo lugar:
  *   login  — usuario e senha
  *   forgot — pede o e-mail e dispara o link
- *   reset  — chega por /admin/login?reset=<token>, define a senha nova
+ *   reset  — chega por /gestao/login?reset=<token>, define a senha nova
  */
 export default function AdminLogin() {
   const { login, isAuthenticated, checking } = useAuth()
@@ -19,7 +62,7 @@ export default function AdminLogin() {
   const [modo, setModo] = useState(resetToken ? 'reset' : 'login')
 
   if (checking) return <main className="a-login" />
-  if (isAuthenticated && modo !== 'reset') return <Navigate to="/admin" replace />
+  if (isAuthenticated && modo !== 'reset') return <Navigate to="/gestao" replace />
 
   const voltarAoLogin = () => {
     if (resetToken) {
@@ -49,7 +92,7 @@ function FormLogin({ onLogin, navigate, onForgot }) {
     setError('')
     const res = await onLogin(form.user, form.pass)
     setLoading(false)
-    if (res.ok) navigate('/admin', { replace: true })
+    if (res.ok) navigate('/gestao', { replace: true })
     else setError(res.error)
   }
 
@@ -62,10 +105,12 @@ function FormLogin({ onLogin, navigate, onForgot }) {
         <label htmlFor="u">Usuario</label>
         <input id="u" value={form.user} onChange={(e) => setForm({ ...form, user: e.target.value })} autoComplete="username" autoFocus />
       </div>
-      <div className="a-field">
-        <label htmlFor="p">Senha</label>
-        <input id="p" type="password" value={form.pass} onChange={(e) => setForm({ ...form, pass: e.target.value })} autoComplete="current-password" />
-      </div>
+      <CampoSenha
+        label="Senha"
+        valor={form.pass}
+        onChange={(v) => setForm({ ...form, pass: v })}
+        autoComplete="current-password"
+      />
 
       <button className="a-btn a-btn--primary" type="submit" disabled={loading}>
         {loading ? 'Entrando...' : 'Entrar'}
@@ -156,16 +201,12 @@ function FormReset({ token, onPronto }) {
       <h1>Nova senha</h1>
       <p className="a-hint">Escolha uma senha de pelo menos 8 caracteres.</p>
 
-      <div className="a-field">
-        <label htmlFor="s1">Nova senha</label>
-        <input id="s1" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} autoComplete="new-password" autoFocus />
+      <CampoSenha label="Nova senha" valor={senha} onChange={setSenha} autoComplete="new-password" autoFocus>
         {curta && <p className="a-hint a-hint--error">Faltam {8 - senha.length} caracteres.</p>}
-      </div>
-      <div className="a-field">
-        <label htmlFor="s2">Repita a senha</label>
-        <input id="s2" type="password" value={confirma} onChange={(e) => setConfirma(e.target.value)} autoComplete="new-password" />
+      </CampoSenha>
+      <CampoSenha label="Repita a senha" valor={confirma} onChange={setConfirma} autoComplete="new-password">
         {diferente && <p className="a-hint a-hint--error">As duas senhas estao diferentes.</p>}
-      </div>
+      </CampoSenha>
 
       <button className="a-btn a-btn--primary" type="submit" disabled={loading || senha.length < 8 || senha !== confirma}>
         {loading ? 'Salvando...' : 'Salvar a senha'}

@@ -21,7 +21,7 @@ export default function EditToolbar() {
 
   // Dentro do painel a edicao ja acontece nos campos, entao a barra do inline
   // so atrapalharia.
-  if (!canEdit || pathname.startsWith('/admin')) return null
+  if (!canEdit || pathname.startsWith('/gestao')) return null
 
   if (!isEditing) {
     return (
@@ -66,7 +66,7 @@ export default function EditToolbar() {
           Salvar
           <kbd>Ctrl S</kbd>
         </button>
-        <Link className="edit-bar__btn" to="/admin">
+        <Link className="edit-bar__btn" to="/gestao">
           Painel
         </Link>
         <button className="edit-bar__btn" type="button" onClick={toggle} title="Sair do modo de edicao">

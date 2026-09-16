@@ -6,7 +6,7 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [username, setUsername] = useState('')
   // Enquanto o servidor nao responde quem esta logado, nao da pra decidir se a
-  // rota /admin redireciona. Sem isso, um F5 no painel joga a Camilla pro login.
+  // rota /gestao redireciona. Sem isso, um F5 no painel joga a Camilla pro login.
   const [checking, setChecking] = useState(true)
 
   // A sessao mora num cookie httpOnly — o JavaScript nao consegue le-la.

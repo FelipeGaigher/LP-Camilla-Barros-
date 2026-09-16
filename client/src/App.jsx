@@ -22,7 +22,7 @@ function Shell() {
   // inteiro, e quem paga sao os containers que rolam por dentro — a sidebar e o
   // quadro do funil simplesmente nao rolavam. Fora isso, inercia de 1,15s e
   // efeito de site institucional: numa ferramenta de trabalho vira atraso.
-  const noPainel = pathname.startsWith('/admin')
+  const noPainel = pathname.startsWith('/gestao')
 
   return (
     <>
@@ -33,9 +33,9 @@ function Shell() {
       <EditToolbar />
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/gestao/login" element={<AdminLogin />} />
         <Route
-          path="/admin"
+          path="/gestao"
           element={
             <RequireAuth>
               <AdminPanel />
@@ -53,7 +53,7 @@ function RequireAuth({ children }) {
   // A sessao esta num cookie httpOnly, entao so o servidor sabe se ela vale.
   // Redirecionar antes da resposta jogaria a Camilla pro login a cada F5.
   if (checking) return null
-  if (!isAuthenticated) return <Navigate to="/admin/login" replace />
+  if (!isAuthenticated) return <Navigate to="/gestao/login" replace />
   return children
 }
 

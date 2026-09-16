@@ -1,7 +1,7 @@
 // Gera dist/sitemap.xml e dist/robots.txt depois do build.
 //
 // Uma pagina so, entao o sitemap e quase simbolico — o que importa e o
-// robots.txt apontando pra ele e barrando /admin do indice.
+// robots.txt apontando pra ele e barrando /gestao do indice.
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -56,8 +56,8 @@ async function main() {
 
   const robots = `User-agent: *
 Allow: /
-Disallow: /admin
-Disallow: /admin/
+Disallow: /gestao
+Disallow: /gestao/
 
 Sitemap: ${base}/sitemap.xml
 `

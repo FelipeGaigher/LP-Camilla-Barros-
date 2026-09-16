@@ -49,7 +49,7 @@ Gere o segredo dos tokens de recuperação:
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-Abra `http://localhost:5173/admin/login` e entre com `ADMIN_USER` e
+Abra `http://localhost:5173/gestao/login` e entre com `ADMIN_USER` e
 `ADMIN_PASSWORD`.
 
 ---
@@ -117,7 +117,7 @@ quando ela perder o acesso e o e-mail de recuperação não estiver disponível.
 3. **Acrescente o domínio à whitelist em `api/_lib/origin.js`.** Sem isso, toda
    gravação do painel volta 403 em produção — o site aparece certo, mas nada
    salva. É o erro mais fácil de cometer neste deploy.
-4. Atualize `APP_URL` na Vercel e o campo **URL do site** em `/admin > SEO`
+4. Atualize `APP_URL` na Vercel e o campo **URL do site** em `/gestao > SEO`
    (ele alimenta o canonical, o Open Graph e o sitemap).
 
 ---
@@ -158,7 +158,7 @@ quando ela perder o acesso e o e-mail de recuperação não estiver disponível.
 | Save "some" depois do reload | Algum GET voltou a mandar `s-maxage`; tem que ser `no-store` |
 | Upload falha com 401 | `BLOB_READ_WRITE_TOKEN` ausente ou sessão expirada |
 | Nenhum e-mail chega | `BREVO_API_KEY` ou `CONTACT_EMAIL` vazios (o log avisa) |
-| WhatsApp mostra link sem imagem | `ogImage` vazio em `/admin > SEO`, ou faltou redeploy |
+| WhatsApp mostra link sem imagem | `ogImage` vazio em `/gestao > SEO`, ou faltou redeploy |
 | Google vê a página vazia | O prerender falhou no build; procure `prerender:` no log |
 
 O prerender nunca derruba o build de propósito: se ele falhar, o site vai ao ar

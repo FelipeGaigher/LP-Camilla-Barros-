@@ -297,7 +297,7 @@ function avisarCamilla({ nome, telefone, email, mensagem, primeiraConsulta, proc
     expiraEm: pedido.expira_em ? brtLabel(pedido.expira_em) : null,
     mensagem,
     primeiraConsulta,
-    painelUrl: base ? `${base.replace(/\/$/, '')}/admin` : '',
+    painelUrl: base ? `${base.replace(/\/$/, '')}/gestao` : '',
   })
 
   sendBrevoEmail({ to: destino, replyTo: email || undefined, subject, htmlContent, textContent })

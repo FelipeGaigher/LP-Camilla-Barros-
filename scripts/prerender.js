@@ -3,7 +3,7 @@
 //
 // Como funciona:
 // 1. Guarda o shell SPA original como dist/app.html — e pra ele que o rewrite
-//    do vercel.json manda /admin e qualquer rota nao prerenderizada.
+//    do vercel.json manda /gestao e qualquer rota nao prerenderizada.
 // 2. Le um snapshot de site_sections no Neon. Sem DATABASE_URL, usa o
 //    defaults.js do proprio front.
 // 3. render(url, sections) do bundle SSR injeta o corpo, e as metas e o JSON-LD

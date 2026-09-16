@@ -8,7 +8,7 @@ textos, fotos e vídeos sozinha, sem mexer em código.
 | Camada | Escolha | Por quê |
 |---|---|---|
 | Front | React 19 + Vite | Mesmo padrão do NovaES, Rara Calma e Automatiza |
-| Roteamento | react-router-dom 7 | Site público + `/admin` no mesmo bundle |
+| Roteamento | react-router-dom 7 | Site público + `/gestao` no mesmo bundle |
 | Animação | Motion (Framer Motion) + Lenis | Cards empilhados, reveals e scroll suave |
 | Estilo | CSS puro com design tokens | Controle fino da tipografia editorial |
 | API | Funções serverless da Vercel | Sem servidor para manter; escala sozinho |
@@ -27,7 +27,7 @@ npm run seed                 # cria o usuário admin e o conteúdo inicial
 npm run dev:full             # API na 3000 + front na 5173
 ```
 
-Site em `http://localhost:5173`, painel em `http://localhost:5173/admin`.
+Site em `http://localhost:5173`, painel em `http://localhost:5173/gestao`.
 
 `npm run dev:full` sobe um Express que varre `api/` e monta as rotas com os
 mesmos handlers que a Vercel executa em produção — o código que você testa é
@@ -92,7 +92,7 @@ viram botão de upload. As alterações ficam num buffer até ela clicar em Salv
 (`Ctrl+S`), e só então são agrupadas por seção e gravadas de uma vez, o que evita
 uma requisição por tecla digitada. Sair da página sem salvar dispara aviso.
 
-**Painel em `/admin`, com prévia ao lado.** O editor fica à esquerda e o site de
+**Painel em `/gestao`, com prévia ao lado.** O editor fica à esquerda e o site de
 verdade à direita, dentro de um iframe, renderizando o rascunho antes de gravar.
 Como é um iframe, as media queries respondem à largura escolhida, então dá para
 conferir o celular sem sair do painel. Clicar num texto da prévia abre a seção
@@ -124,7 +124,7 @@ direto é irrelevante perto do custo de desconfiar da ferramenta.
 lê um snapshot de `site_sections` no Neon e escreve a home já renderizada em
 `dist/index.html`, com `<title>`, Open Graph e o JSON-LD de `schema.org/Dentist`.
 O shell da SPA é preservado como `dist/app.html`, para onde o `vercel.json`
-manda `/admin` e as demais rotas.
+manda `/gestao` e as demais rotas.
 
 As metas e o JSON-LD saem de `client/src/lib/seo.js` — a mesma função que o
 `SeoHead` aplica em runtime. Uma definição só: se fossem duas, a do build

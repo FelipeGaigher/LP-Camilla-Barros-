@@ -15,7 +15,7 @@ export const EditModeContext = createContext(null)
  * uma requisicao por tecla digitada.
  *
  * Desligavel por variavel de ambiente: com VITE_ENABLE_INLINE_CMS=false o
- * inline some e sobra o painel em /admin.
+ * inline some e sobra o painel em /gestao.
  */
 const INLINE_ATIVO = import.meta.env.VITE_ENABLE_INLINE_CMS !== 'false'
 

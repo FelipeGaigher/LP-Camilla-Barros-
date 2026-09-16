@@ -8,7 +8,7 @@ desfazer e um de restaurar o texto original.
 
 ## Como entrar
 
-1. Acesse `seusite.com.br/admin`
+1. Acesse `seusite.com.br/gestao`
 2. Entre com seu usuário e senha
 3. Na primeira vez, vá em **Minha conta** e troque a senha
 

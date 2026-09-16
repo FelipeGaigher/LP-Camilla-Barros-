@@ -258,6 +258,31 @@
 }
 .a-field textarea { resize: vertical; min-height: 6rem; }
 
+/* Campo de senha com o olho de ver.
+   O botao entra por dentro da moldura do input, entao o input ganha respiro a
+   direita: sem isso a senha longa passa por baixo do icone. */
+.a-senha { position: relative; display: grid; }
+.a-senha input { padding-right: 2.875rem; }
+/* 2.75rem = 44px, o minimo de alvo de toque. Cabe exato na altura do input,
+   entao o botao ocupa a lateral inteira em vez de sobrar um anel morto em
+   volta de um icone pequeno demais para o dedo. */
+.a-senha__olho {
+  position: absolute; top: 50%; right: 1px;
+  transform: translateY(-50%);
+  display: grid; place-items: center;
+  width: 2.75rem; height: 2.75rem;
+  padding: 0; border: 0; border-radius: 0 8px 8px 0;
+  background: none; color: var(--a-muted);
+  cursor: pointer;
+  transition: color 0.18s, background 0.18s;
+}
+.a-senha__olho:hover { color: var(--a-text); background: rgba(26, 26, 26, 0.05); }
+.a-senha__olho:focus-visible {
+  outline: 2px solid var(--a-accent);
+  outline-offset: 1px;
+  color: var(--a-text);
+}
+
 .a-hint { font-size: 0.8125rem; color: var(--a-muted); line-height: 1.5; }
 .a-hint--error { color: var(--a-danger); }
 

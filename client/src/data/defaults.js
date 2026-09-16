@@ -1,7 +1,7 @@
 /**
  * CONTEUDO PADRAO DO SITE
  *
- * Tudo aqui e editavel pelo painel (/admin) e fica salvo no banco.
+ * Tudo aqui e editavel pelo painel (/gestao) e fica salvo no banco.
  * Os textos marcados com [PLACEHOLDER] sao provisorios: trocar assim que
  * a Camilla enviar as informacoes reais.
  *
