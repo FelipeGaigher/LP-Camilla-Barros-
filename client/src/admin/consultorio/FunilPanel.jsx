@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { buscarFunil, moverCard, arquivarCard } from '../../data/agendaApi'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { buscarFunil, moverCard, arquivarCard, salvarPaciente } from '../../data/agendaApi'
 import PanelState from '../ui/PanelState'
 
 /**
@@ -23,6 +23,7 @@ export default function FunilPanel() {
   const [erro, setErro] = useState('')
   const [sobre, setSobre] = useState(null)
   const [salvando, setSalvando] = useState(null)
+  const [adicionando, setAdicionando] = useState(null) // id da coluna com o form aberto
 
   const carregar = useCallback(async () => {
     setEstado('carregando')
@@ -136,10 +137,30 @@ export default function FunilPanel() {
               <header className="k-col__head">
                 <h2 title={coluna.ajuda}>{coluna.label}</h2>
                 <span className="k-col__conta">{coluna.cards.length}</span>
+                <button
+                  type="button"
+                  className="k-col__novo"
+                  onClick={() => setAdicionando(adicionando === coluna.id ? null : coluna.id)}
+                  aria-label={`Adicionar pessoa em ${coluna.label}`}
+                  title={`Adicionar em ${coluna.label}`}
+                >
+                  +
+                </button>
               </header>
 
               <div className="k-col__corpo">
-                {coluna.cards.length === 0 && <p className="k-col__vazia">—</p>}
+                {adicionando === coluna.id && (
+                  <NovoCard
+                    estagio={coluna.id}
+                    onCancelar={() => setAdicionando(null)}
+                    onCriado={() => { setAdicionando(null); carregar() }}
+                    onErro={setErro}
+                  />
+                )}
+
+                {coluna.cards.length === 0 && adicionando !== coluna.id && (
+                  <p className="k-col__vazia">—</p>
+                )}
                 {coluna.cards.map((card) => (
                   <Card
                     key={`${card.tipo}:${card.id}`}
@@ -156,6 +177,60 @@ export default function FunilPanel() {
         </div>
       </PanelState>
     </div>
+  )
+}
+
+/**
+ * Cadastro rapido, no formato do proprio card e dentro da coluna.
+ *
+ * Nasce ja no estagio da coluna onde ela clicou no "+": abrir uma tela de
+ * cadastro completa pra anotar um nome que chegou por telefone e obrigar a
+ * arrastar o card em seguida sao dois passos que ninguem faz no meio do
+ * atendimento. O resto da ficha ela completa depois, em Pacientes.
+ */
+function NovoCard({ estagio, onCancelar, onCriado, onErro }) {
+  const [nome, setNome] = useState('')
+  const [telefone, setTelefone] = useState('')
+  const [salvando, setSalvando] = useState(false)
+  const campo = useRef(null)
+
+  useEffect(() => { campo.current?.focus() }, [])
+
+  async function salvar(e) {
+    e.preventDefault()
+    if (!nome.trim() || salvando) return
+    setSalvando(true)
+    const r = await salvarPaciente({ nome: nome.trim(), telefone: telefone.trim(), estagio })
+    setSalvando(false)
+    if (!r.ok) { onErro(r.error); return }
+    onCriado()
+  }
+
+  return (
+    <form className="k-novo" onSubmit={salvar} onKeyDown={(e) => { if (e.key === 'Escape') onCancelar() }}>
+      <div className="a-field">
+        <label htmlFor={`nc-nome-${estagio}`} className="sr-only">Nome</label>
+        <input
+          id={`nc-nome-${estagio}`} ref={campo} type="text" required
+          placeholder="Nome da pessoa"
+          value={nome} onChange={(e) => setNome(e.target.value)}
+        />
+      </div>
+      <div className="a-field">
+        <label htmlFor={`nc-tel-${estagio}`} className="sr-only">WhatsApp</label>
+        <input
+          id={`nc-tel-${estagio}`} type="tel" inputMode="tel"
+          placeholder="WhatsApp (opcional)"
+          value={telefone} onChange={(e) => setTelefone(e.target.value)}
+        />
+      </div>
+      <div className="a-rowactions">
+        <button type="submit" className="a-btn a-btn--sm a-btn--primary" disabled={salvando}>
+          {salvando ? 'Salvando...' : 'Adicionar'}
+        </button>
+        <button type="button" className="a-btn a-btn--sm" onClick={onCancelar}>Cancelar</button>
+      </div>
+    </form>
   )
 }
 

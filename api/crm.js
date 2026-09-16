@@ -109,6 +109,12 @@ async function acaoKanban(sql, req, res, auth) {
                a.solicitante_email, a.inicio, a.status, a.procedimento_nome, a.criado_em
           FROM agendamentos a
          WHERE a.paciente_id IS NULL
+           -- So pedido vindo do site: e o unico caso em que existe gente sem
+           -- cadastro de proposito, com os dados em solicitante_*. Agendamento
+           -- feito no painel sempre tem paciente; sem este filtro, um que ficou
+           -- orfao (paciente apagada, FK vira NULL) virava card "Sem nome".
+           AND a.origem = 'site'
+           AND a.solicitante_nome IS NOT NULL
            AND a.status IN ('pendente','confirmado')
            AND NOT EXISTS (
                  SELECT 1 FROM pacientes p
@@ -463,6 +469,11 @@ async function acaoSalvar(sql, req, res, auth) {
 
   const telefone = clean(req.body?.telefone, 40)
   const chave = normalizaTelefone(telefone)
+
+  // Criar pelo funil nasce na coluna onde ela clicou no "+". Sem isso todo
+  // cadastro cairia em "contato novo" e ela teria que arrastar logo em seguida.
+  const pedido = clean(req.body?.estagio, 20)
+  const estagioNovo = ehEstagioValido(pedido) ? pedido : ESTAGIO_INICIAL
   const campos = {
     nome,
     telefone: telefone || null,
@@ -500,7 +511,7 @@ async function acaoSalvar(sql, req, res, auth) {
             ${campos.nome}, ${campos.telefone}, ${campos.chave}, ${campos.email},
             ${campos.nascimento}, ${campos.origem}, ${campos.indicadoPor},
             ${campos.bairro}, ${campos.cidade}, ${campos.contatoPref}, ${campos.alerta},
-            ${campos.observacoes}, ${ESTAGIO_INICIAL}, NOW(), 'presencial'
+            ${campos.observacoes}, ${estagioNovo}, NOW(), 'presencial'
           )
           RETURNING id
         `

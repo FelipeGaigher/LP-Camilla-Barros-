@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   listarAgenda, listarPendentes, confirmarAgendamento, mudarStatusAgendamento,
-  buscarConfigAgenda,
+  buscarConfigAgenda, buscarProcedimentos,
 } from '../../data/agendaApi'
+import NovoAgendamento from './NovoAgendamento'
 import {
   brtParts, brtDayStart, brtTime, brtDataCurta, hojeBRT, somaDias, diffDias,
   nomeDiaSemana, nomeMes, matrizDoMes, minutosParaHora,
@@ -42,6 +43,8 @@ export default function AgendaPanel() {
   const [agendamentos, setAgendamentos] = useState([])
   const [pendentes, setPendentes] = useState([])
   const [faixas, setFaixas] = useState([])
+  const [procedimentos, setProcedimentos] = useState([])
+  const [novo, setNovo] = useState(null) // { dia, hora } quando o painel esta aberto
   const [estado, setEstado] = useState('carregando')
   const [erro, setErro] = useState('')
 
@@ -61,15 +64,19 @@ export default function AgendaPanel() {
 
   const carregar = useCallback(async () => {
     setEstado('carregando')
-    const [ag, pend, cfg] = await Promise.all([
+    const [ag, pend, cfg, procs] = await Promise.all([
       listarAgenda(periodo),
       listarPendentes(),
       buscarConfigAgenda(),
+      buscarProcedimentos(),
     ])
     if (!ag.ok) { setErro(ag.error); setEstado('erro'); return }
     setAgendamentos(ag.data.agendamentos)
     setPendentes(pend.ok ? pend.data.pendentes : [])
     if (cfg.ok) setFaixas(cfg.data.faixas || [])
+    // Logada, a lista vem com os internos (retorno, urgencia, encaixe) — que
+    // sao justamente os que ela marca a mao e nao aparecem no site.
+    if (procs.ok) setProcedimentos(procs.data.procedimentos || [])
     setEstado('pronto')
   }, [periodo])
 
@@ -192,6 +199,12 @@ export default function AgendaPanel() {
               {pendentes.length} {pendentes.length === 1 ? 'pedido' : 'pedidos'}
             </button>
           )}
+          <button
+            className="a-btn a-btn--sm a-btn--primary"
+            onClick={() => setNovo({ dia: data, hora: minutosParaHora(regua.inicio) })}
+          >
+            + Agendar
+          </button>
           <button className="a-btn a-btn--sm" onClick={carregar}>Atualizar</button>
           <div className="ag-vistas" role="tablist" aria-label="Como ver a agenda">
             {VISTAS.map((v) => (
@@ -238,10 +251,19 @@ export default function AgendaPanel() {
                 onMarcar={marcar}
                 onConfirmar={confirmar}
                 onRecusar={recusar}
+                onNovo={setNovo}
               />
             )}
           </div>
         </div>
+
+        <NovoAgendamento
+          aberto={!!novo}
+          inicial={novo}
+          procedimentos={procedimentos}
+          onFechar={() => setNovo(null)}
+          onCriado={() => { setNovo(null); carregar() }}
+        />
       </PanelState>
     </div>
   )
@@ -255,7 +277,7 @@ export default function AgendaPanel() {
  * colisao so acontece com 'faltou'; mesmo assim o calculo de faixa existe, pra
  * dois cards nunca ficarem um por cima do outro.
  */
-function GradeTempo({ dias, eventos, regua, hoje, umDiaSo, onMarcar, onConfirmar, onRecusar }) {
+function GradeTempo({ dias, eventos, regua, hoje, umDiaSo, onMarcar, onConfirmar, onRecusar, onNovo }) {
   const totalLinhas = Math.max(1, (regua.fim - regua.inicio) / PASSO_MIN)
   const horas = []
   for (let m = regua.inicio; m < regua.fim; m += 60) horas.push(m)
@@ -310,15 +332,24 @@ function GradeTempo({ dias, eventos, regua, hoje, umDiaSo, onMarcar, onConfirmar
         </span>
       ))}
 
-      {/* Fundo: uma celula por hora, so pra desenhar as linhas. */}
+      {/* Fundo clicavel: uma celula por faixa de meia hora. E o gesto natural —
+          ela ve o buraco na quinta as 15h e marca ali, sem redigitar a data. */}
       {dias.map((dia, ci) =>
-        horas.map((m) => (
-          <div
-            key={`${dia}-${m}`}
-            className="ag-grade__celula"
-            style={{ gridColumn: ci + 2, gridRow: `${linha(m) + 2} / span 2` }}
-          />
-        ))
+        Array.from({ length: totalLinhas }, (_, i) => {
+          const m = regua.inicio + i * PASSO_MIN
+          const h = minutosParaHora(m)
+          return (
+            <button
+              type="button"
+              key={`${dia}-${m}`}
+              className={`ag-grade__slot ${m % 60 === 0 ? 'is-hora' : ''}`}
+              style={{ gridColumn: ci + 2, gridRow: i + 2 }}
+              onClick={() => onNovo({ dia, hora: h })}
+              aria-label={`Agendar em ${dia} as ${h}`}
+              title={`Agendar as ${h}`}
+            />
+          )
+        })
       )}
 
       {dias.map((dia, ci) =>

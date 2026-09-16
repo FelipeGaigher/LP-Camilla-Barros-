@@ -31,6 +31,11 @@ import {
 
 const ACOES_PUBLICAS = new Set(['dias', 'slots', 'procedimentos', 'solicitar'])
 
+// Publicas, mas que devolvem mais quando quem pergunta esta logada. Lista
+// propria e curta de proposito: qualquer acao aqui precisa ter sido pensada
+// pros dois casos, e o padrao continua sendo a resposta publica.
+const ACOES_COM_SESSAO_OPCIONAL = new Set(['procedimentos'])
+
 function clean(v, max = 300) {
   return String(v ?? '').trim().slice(0, max)
 }
@@ -55,6 +60,12 @@ export default async function handler(req, res) {
     if (!ACOES_PUBLICAS.has(action)) {
       auth = await requireAuth(req)
       if (!auth.authorized) return erro(res, 401, 'NAO_AUTORIZADO', 'Nao autorizado.')
+    } else if (ACOES_COM_SESSAO_OPCIONAL.has(action)) {
+      // Acao publica que responde MAIS pra quem esta logada. Nao afrouxa o
+      // guard: sem sessao a resposta continua sendo a versao publica. O painel
+      // precisa disso pra enxergar retorno e urgencia, que nao vao pro site.
+      const tentativa = await requireAuth(req)
+      if (tentativa.authorized) auth = tentativa
     }
 
     // Nada da agenda pode ser cacheado no edge: horario livre muda a cada
