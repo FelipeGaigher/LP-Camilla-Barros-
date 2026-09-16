@@ -194,6 +194,24 @@
 .a-editor__head h1 { font-family: var(--font-display); font-size: clamp(1.5rem, 3vw, 2.125rem); font-weight: 400; }
 .a-editor__actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .a-editor__body { display: grid; gap: 1.5rem; }
+
+/* Container padrao de conteudo do painel. Existe pra nada ficar solto sobre o
+   fundo: campo, lista e bloco de ajuste moram dentro de um. */
+.a-painel {
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+  border: 1px solid var(--a-line);
+  border-radius: 12px;
+  background: var(--a-panel);
+}
+/* Dentro do container o grupo dispensa a propria borda — duas caixas encaixadas
+   com 1px cada viram moldura sobre moldura. Fica so o recuo e o filete. */
+.a-painel > .a-group {
+  border: 0;
+  border-top: 1px solid var(--a-line);
+  border-radius: 0;
+  padding: 1.25rem 0 0;
+}
+.a-painel > .a-group:first-child { border-top: 0; padding-top: 0; }
 .a-editor__foot {
   margin-top: 2.5rem; padding-top: 1.5rem;
   border-top: 1px solid var(--a-line);

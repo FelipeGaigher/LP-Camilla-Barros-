@@ -6,6 +6,7 @@ import {
 import { ESTAGIOS } from '../../lib/funil'
 import { brtDataCurta } from '../../lib/brt'
 import PanelState, { SearchField } from '../ui/PanelState'
+import { IconeEditar, IconeExcluir, IconeWhatsApp } from '../ui/Icones'
 
 /**
  * Pacientes: lista a esquerda, ficha a direita.
@@ -113,25 +114,38 @@ export default function PacientesPanel() {
                         {p.alerta && <span className="p-linha__alerta" title={p.alerta}>!</span>}
                       </button>
 
-                      {/* As acoes ficam a vista, e nao escondidas atras de abrir
-                          a ficha: quem procura uma paciente na lista quase
-                          sempre quer uma dessas tres coisas. */}
+                      {/* Icone em vez de palavra: tres rotulos por linha comiam
+                          a largura e empurravam nome e telefone pra tres linhas.
+                          Cada um leva aria-label — botao so com icone nao tem
+                          nome acessivel nenhum. */}
                       <div className="a-rowactions p-linha__acoes">
-                        <button type="button" onClick={() => setSelecionado(p.id)} title="Abrir e editar">
-                          Editar
+                        <button
+                          type="button"
+                          onClick={() => setSelecionado(p.id)}
+                          aria-label={`Editar ${p.nome}`}
+                          title="Editar"
+                        >
+                          <IconeEditar />
                         </button>
                         {zap && (
-                          <a href={zap} target="_blank" rel="noopener noreferrer" title="Abrir no WhatsApp">
-                            WhatsApp
+                          <a
+                            href={zap}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={`Falar com ${p.nome} no WhatsApp`}
+                            title="WhatsApp"
+                          >
+                            <IconeWhatsApp />
                           </a>
                         )}
                         <button
                           type="button"
                           className="is-danger"
                           onClick={() => excluir(p)}
-                          title="Excluir os dados da paciente"
+                          aria-label={`Excluir os dados de ${p.nome}`}
+                          title="Excluir"
                         >
-                          Excluir
+                          <IconeExcluir />
                         </button>
                       </div>
                     </li>

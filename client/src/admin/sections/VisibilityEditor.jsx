@@ -58,7 +58,7 @@ export default function VisibilityEditor() {
         </div>
       </header>
 
-      <div className="a-editor__body">
+      <div className="a-editor__body a-painel">
         <ul className="a-vis">
           {order.map((key, i) => (
             <li className={`a-vis__row ${draft[key] === false ? 'is-off' : ''}`} key={key}>
