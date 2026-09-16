@@ -157,7 +157,13 @@ export default function AdminPanel() {
             // o contador de pedidos da agenda precisa levar ao funil.
             <Custom onIr={setActive} />
           ) : (
-            <SectionEditor sectionKey={active} onDraftChange={onDraftChange} focusPath={focusPath} />
+            // `key` obriga a remontar a cada troca de secao, e nao e cosmetico.
+            // Sem ele o React reaproveita a instancia: o efeito que resincroniza
+            // o rascunho apenas AGENDA o novo valor, enquanto o efeito que manda
+            // pra previa roda na mesma passada com a sectionKey nova e o rascunho
+            // velho. A previa recebia { footer: <dados do contato> }, e o primeiro
+            // acesso aninhado derrubava a arvore inteira — tela branca no painel.
+            <SectionEditor key={active} sectionKey={active} onDraftChange={onDraftChange} focusPath={focusPath} />
           )}
         </main>
 
