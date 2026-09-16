@@ -84,7 +84,17 @@ export function EditModeProvider({ children }) {
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [pendingCount])
 
-  const saveNow = useCallback(() => {
+  /**
+   * Salva o buffer. Espera o servidor responder antes de dizer que salvou.
+   *
+   * Antes marcava 'saved' logo depois de disparar os updateSection, que nao
+   * devolviam nada: PUT recusado, sessao vencida ou rede fora davam "Salvo" na
+   * mesma. A Camilla subia foto, lia "Salvo" e a foto nao estava no banco.
+   *
+   * Em caso de falha o buffer volta, para nao perder o que ela escreveu — o que
+   * ela editou durante o envio vence, por isso o snapshot entra por baixo.
+   */
+  const saveNow = useCallback(async () => {
     const chaves = Object.keys(pending)
     if (chaves.length === 0) {
       setSaveStatus('idle')
@@ -93,17 +103,28 @@ export function EditModeProvider({ children }) {
     const snapshot = pending
     setPending({})
     setSaveStatus('saving')
+
+    const devolverBuffer = () => setPending((atual) => ({ ...snapshot, ...atual }))
+
     try {
       const porSecao = groupBySection(snapshot)
-      Object.entries(porSecao).forEach(([secao, patches]) => {
-        const base = data[secao] ?? {}
-        updateSection(secao, applyPatches(base, patches))
-      })
+      const resultados = await Promise.all(
+        Object.entries(porSecao).map(([secao, patches]) =>
+          updateSection(secao, applyPatches(data[secao] ?? {}, patches))
+        )
+      )
+
+      if (!resultados.every(Boolean)) {
+        devolverBuffer()
+        setSaveStatus('error')
+        return
+      }
+
       setSaveStatus('saved')
       setTimeout(() => setSaveStatus((s) => (s === 'saved' ? 'idle' : s)), 2500)
     } catch (err) {
       console.error('Falha ao salvar edicao inline:', err)
-      setPending(snapshot)
+      devolverBuffer()
       setSaveStatus('error')
     }
   }, [data, updateSection, pending])

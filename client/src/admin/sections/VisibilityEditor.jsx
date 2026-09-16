@@ -11,6 +11,7 @@ export default function VisibilityEditor() {
   const [draft, setDraft] = useState(() => JSON.parse(JSON.stringify(data.visibility)))
   const [dirty, setDirty] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [erroSave, setErroSave] = useState('')
 
   useEffect(() => {
     setDraft(JSON.parse(JSON.stringify(data.visibility)))
@@ -34,8 +35,14 @@ export default function VisibilityEditor() {
     setSaved(false)
   }
 
-  const save = () => {
-    updateSection('visibility', draft)
+  // Espera o servidor confirmar. Ver o comentario em SectionEditor.save.
+  const save = async () => {
+    setErroSave('')
+    const ok = await updateSection('visibility', draft)
+    if (!ok) {
+      setErroSave('Nao foi possivel salvar. Verifique a conexao e tente de novo.')
+      return
+    }
     setDirty(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
@@ -55,6 +62,7 @@ export default function VisibilityEditor() {
           <button className="a-btn a-btn--primary" onClick={save} disabled={!dirty || syncing}>
             {syncing ? 'Salvando...' : saved ? 'Salvo' : 'Salvar alteracoes'}
           </button>
+          {erroSave && <span className="a-hint a-hint--error" role="alert">{erroSave}</span>}
         </div>
       </header>
 

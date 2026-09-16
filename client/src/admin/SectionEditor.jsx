@@ -17,6 +17,7 @@ export default function SectionEditor({ sectionKey, onDraftChange, focusPath }) 
   const [draft, setDraft] = useState(() => clone(data[sectionKey]))
   const [dirty, setDirty] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [erroSave, setErroSave] = useState('')
 
   useEffect(() => {
     setDraft(clone(data[sectionKey]))
@@ -50,8 +51,16 @@ export default function SectionEditor({ sectionKey, onDraftChange, focusPath }) 
     setSaved(false)
   }
 
-  const save = () => {
-    updateSection(sectionKey, draft)
+  // Espera o servidor. Antes marcava salvo na hora, entao PUT recusado ou rede
+  // fora mostravam "Salvo" e o conteudo nao chegava na LP. Em caso de erro o
+  // draft continua sujo, para o botao seguir disponivel e nada se perder.
+  const save = async () => {
+    setErroSave('')
+    const ok = await updateSection(sectionKey, draft)
+    if (!ok) {
+      setErroSave('Nao foi possivel salvar. Verifique a conexao e tente de novo.')
+      return
+    }
     setDirty(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
@@ -110,7 +119,11 @@ export default function SectionEditor({ sectionKey, onDraftChange, focusPath }) 
         <button className="a-btn a-btn--primary" onClick={save} disabled={!dirty || syncing}>
           {syncing ? 'Salvando...' : saved ? 'Salvo' : 'Salvar alteracoes'}
         </button>
-        {dirty && <span className="a-hint">Voce tem alteracoes nao salvas.</span>}
+        {erroSave ? (
+          <span className="a-hint a-hint--error" role="alert">{erroSave}</span>
+        ) : (
+          dirty && <span className="a-hint">Voce tem alteracoes nao salvas.</span>
+        )}
       </footer>
     </div>
   )

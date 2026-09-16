@@ -103,11 +103,24 @@ export function SiteDataProvider({ children, staticSections }) {
   const undoRef = useRef({})
   const [undoAvailable, setUndoAvailable] = useState({})
 
+  // Espelho do estado, para ler o valor corrente fora do render — snapshot de
+  // undo, base do patch — sem precisar do updater do setData, que tem que
+  // continuar puro. Ver o comentario de updateSection.
+  const dataRef = useRef(data)
+  useEffect(() => {
+    dataRef.current = data
+  }, [data])
+
+  // Quantas gravacoes estao em voo. Sem o contador, a primeira a terminar
+  // apagava o indicador enquanto as outras ainda estavam subindo.
+  const emVooRef = useRef(0)
+
   const refreshFromApi = useCallback(async () => {
     const sections = await fetchAllSections({ bustCache: true })
     if (sections) {
       const merged = withDefaults({ ...loadAll(), ...sections })
       saveAll(merged)
+      dataRef.current = merged
       setData(merged)
     }
     setReady(true)
@@ -118,26 +131,39 @@ export function SiteDataProvider({ children, staticSections }) {
     refreshFromApi()
   }, [refreshFromApi, isStatic])
 
-  const updateSection = useCallback(
-    (section, sectionData, { skipUndo = false } = {}) => {
-      setData((prev) => {
-        if (!skipUndo) {
-          undoRef.current[section] = clone(prev[section])
-          setUndoAvailable((u) => ({ ...u, [section]: true }))
-        }
-        const next = { ...prev, [section]: sectionData }
-        cacheSave(section, sectionData)
-        setSyncing(true)
-        apiSave(section, sectionData)
-          .then((ok) => {
-            if (!ok) console.warn(`Nao foi possivel salvar a secao "${section}" no servidor.`)
-          })
-          .finally(() => setSyncing(false))
-        return next
-      })
-    },
-    []
-  )
+  /**
+   * Grava uma secao: estado, cache local e servidor. Devolve se o servidor
+   * aceitou — quem chamou precisa disso para avisar em vez de cantar vitoria.
+   *
+   * A chamada de rede fica FORA do updater do setData, e isso nao e estilo.
+   * Ela morava dentro, junto com cacheSave e dois setState. Updater tem que
+   * ser puro: o React pode descartar um render e reinvocar a fila, entao o PUT
+   * ora saia duas vezes, ora nao saia nenhuma. O sintoma era silencioso — cinco
+   * fotos subidas de uma vez, "Salvo" na tela, duas linhas no banco.
+   */
+  const updateSection = useCallback(async (section, sectionData, { skipUndo = false } = {}) => {
+    if (!skipUndo) {
+      undoRef.current[section] = clone(dataRef.current[section])
+      setUndoAvailable((u) => ({ ...u, [section]: true }))
+    }
+
+    // Eager, porque duas secoes podem ser gravadas no mesmo tick (um save
+    // inline toca varias) e a segunda precisa enxergar a primeira.
+    dataRef.current = { ...dataRef.current, [section]: sectionData }
+    setData((prev) => ({ ...prev, [section]: sectionData }))
+    cacheSave(section, sectionData)
+
+    emVooRef.current += 1
+    setSyncing(true)
+    try {
+      const ok = await apiSave(section, sectionData)
+      if (!ok) console.warn(`Nao foi possivel salvar a secao "${section}" no servidor.`)
+      return ok
+    } finally {
+      emVooRef.current -= 1
+      if (emVooRef.current === 0) setSyncing(false)
+    }
+  }, [])
 
   const undoSection = useCallback(
     (section) => {
@@ -153,6 +179,7 @@ export function SiteDataProvider({ children, staticSections }) {
   const resetSection = useCallback(
     (section) => {
       const defaultData = clone(defaults[section])
+      dataRef.current = { ...dataRef.current, [section]: defaultData }
       setData((prev) => ({ ...prev, [section]: defaultData }))
       cacheClear(section)
       setSyncing(true)
