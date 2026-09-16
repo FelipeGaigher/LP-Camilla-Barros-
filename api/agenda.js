@@ -114,9 +114,22 @@ function resolverProcedimento(procedimentos, id, { apenasPublico = true } = {}) 
   return lista[0] || null
 }
 
-async function comContexto(sql) {
-  await varrerVencidos(sql)
-  return carregarConfig(sql)
+/**
+ * Configuracao, grade e procedimentos.
+ *
+ * A ordem importa: a varredura de pendente vencido e uma ESCRITA, e o bloco de
+ * horario do formulario chama `dias` em toda carga da home. Varrer antes de
+ * saber se o agendamento esta sequer ligado daria um UPDATE por visitante do
+ * site — com o agendamento desligado, um UPDATE que nunca casa nada.
+ *
+ * Agora le a config primeiro e so varre quando ha pendente possivel. O painel
+ * passa varrerSempre: la o horario preso precisa ser liberado mesmo com o
+ * agendamento publico desligado.
+ */
+async function comContexto(sql, { varrerSempre = false } = {}) {
+  const ctx = await carregarConfig(sql)
+  if (varrerSempre || ctx.config?.publico_ativo) await varrerVencidos(sql)
+  return ctx
 }
 
 async function acaoDias(sql, req, res) {
@@ -369,7 +382,9 @@ function paraPainel(l) {
 
 async function acaoCriar(sql, req, res, auth) {
   if (req.method !== 'POST') return erro(res, 405, 'METODO', 'Metodo nao permitido.')
-  const { config, faixas, procedimentos } = await comContexto(sql)
+  // Varre sempre: pendente vencido precisa liberar o horario mesmo com o
+  // agendamento pelo site desligado, senao ela nao consegue marcar por cima.
+  const { config, faixas, procedimentos } = await comContexto(sql, { varrerSempre: true })
 
   // No painel a Camilla pode agendar qualquer procedimento, inclusive os que
   // nao aparecem no site.
