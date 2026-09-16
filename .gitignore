@@ -8,3 +8,8 @@ dist-ssr
 
 # tarballs de transferencia
 *.tar.gz
+
+# Imagens-fonte de trabalho (originais do Gemini, recortes). O site serve
+# pelo Vercel Blob, entao isto e material de bastidor: 16 MB que ficariam para
+# sempre no historico de um repositorio publico sem ninguem consumir.
+docs/images/
