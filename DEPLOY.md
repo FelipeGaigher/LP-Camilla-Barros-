@@ -164,3 +164,44 @@ quando ela perder o acesso e o e-mail de recuperação não estiver disponível.
 O prerender nunca derruba o build de propósito: se ele falhar, o site vai ao ar
 como SPA pura e só o SEO degrada. Por isso vale conferir o log de build quando o
 HTML estático parecer vazio.
+
+## Desenvolver sem encostar no banco de produção
+
+O `.env.local` aponta para o Neon de produção. Rodar migration, seed ou teste
+com ele é mexer no banco da Camilla — um `seed` distraído reverte conteúdo que
+ela editou pelo painel.
+
+O driver do Neon só fala o protocolo SQL-over-HTTP, então não dá para apontar
+direto para um Postgres local: quem traduz é um proxy. Com `NEON_HTTP_PROXY`
+definido, `db.js` redireciona para ele e o projeto inteiro (migrate, seed,
+dev-server, prerender) passa a usar o banco local. Sem a variável nada muda, e
+em produção ela não existe.
+
+```bash
+docker network create camilla-net
+
+docker run -d --name lp-pg --network camilla-net \
+  -e POSTGRES_PASSWORD=<uma senha qualquer> -e POSTGRES_DB=camilla \
+  postgres:17-alpine
+
+docker run -d --name lp-neon-proxy --network camilla-net -p 4444:4444 \
+  -e PG_CONNECTION_STRING="postgres://postgres:<a mesma senha>@lp-pg:5432/camilla" \
+  ghcr.io/timowilhelm/local-neon-http-proxy:main
+```
+
+Depois, em cada terminal onde for rodar algo do projeto:
+
+```bash
+export DATABASE_URL="postgres://postgres:<a mesma senha>@localhost:4444/camilla"
+export NEON_HTTP_PROXY="http://localhost:4444/sql"
+
+npm run migrate && npm run seed && npm run dev:full
+```
+
+Exportar no shell é de propósito: o `dotenv` não sobrescreve variável que já
+existe, então o `.env.local` de produção é ignorado enquanto a sessão durar.
+**Não** grave isso no `.env.local` — na próxima vez que você esquecer de
+desfazer, o deploy sai apontando para um Postgres em `localhost`.
+
+O `npm run test:db` não precisa de nada disso: ele sobe e derruba o próprio
+container.

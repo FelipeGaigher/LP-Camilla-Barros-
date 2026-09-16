@@ -22,11 +22,10 @@ export function getDb() {
     // um proxy; NEON_HTTP_PROXY aponta pra ele. Sem a variavel nada muda, e em
     // producao ela nao existe.
     //
-    // Levantar o par (veja DEPLOY.md):
-    //   docker run -d --name lp-pg --network camilla-net ... postgres:17-alpine
-    //   docker run -d --name lp-neon-proxy --network camilla-net -p 4444:4444 \
-    //     -e PG_CONNECTION_STRING=postgres://postgres:teste@lp-pg:5432/camilla \
-    //     ghcr.io/timowilhelm/local-neon-http-proxy:main
+    // O par de containers pra isso esta documentado no DEPLOY.md. Aqui nao vai
+    // string de conexao nem de exemplo: comentario com "usuario:senha@host" em
+    // repositorio publico e o tipo de linha que scanner de segredo aponta e que
+    // alguem acaba copiando pra producao.
     const proxy = process.env.NEON_HTTP_PROXY
     if (proxy) {
       neonConfig.fetchEndpoint = proxy
