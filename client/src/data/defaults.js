@@ -237,7 +237,9 @@ export const defaults = {
     title: 'Vamos conversar sobre o seu caso',
     text: 'Envie uma mensagem no WhatsApp ou preencha o formulario. A gente responde no mesmo dia, em horario comercial.',
     whatsapp: {
-      number: '[PLACEHOLDER] 5527900000000',
+      // So digitos com DDI: e assim que o waLink monta o link, e e o formato
+      // que o JSON-LD de telephone espera.
+      number: '5563999827704',
       message: 'Ola! Vim pelo site e gostaria de agendar uma avaliacao.',
       label: 'Chamar no WhatsApp',
     },
