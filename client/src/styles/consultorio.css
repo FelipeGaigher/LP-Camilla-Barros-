@@ -1,0 +1,310 @@
+/* ==========================================================================
+   Consultorio: agenda, funil, pacientes e horarios.
+   Arquivo proprio pra nao inflar o admin.css, que ja tem 400 linhas. Os tokens
+   vivem no :root do admin.css, entao a ordem de import nao importa.
+
+   Regra de cor deste modulo: NENHUM token novo. A paleta do painel e
+   monocromatica com um azul, de proposito. Status se diz por forma e peso —
+   tracejado pra pendente, preenchido pra confirmado, riscado pra cancelado —
+   nao por um semaforo de cores que nao existe no sistema.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- kanban */
+
+/* Rola na horizontal porque seis colunas nao cabem em tela nenhuma. O scroll e
+   deste container, nao do documento: o corpo da pagina nunca rola de lado. */
+.k-quadro {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(15rem, 1fr);
+  gap: 0.875rem;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-bottom: 0.75rem;
+  scroll-snap-type: x proximity;
+}
+
+.k-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: rgba(26, 26, 26, 0.025);
+  border: 1px solid var(--a-line);
+  border-radius: 12px;
+  scroll-snap-align: start;
+  transition: background 0.18s, border-color 0.18s;
+}
+.k-col.is-sobre {
+  background: var(--a-accent-tint, rgba(78, 122, 142, 0.08));
+  border-color: var(--a-accent);
+}
+.k-col__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 0.875rem;
+  border-bottom: 1px solid var(--a-line);
+}
+.k-col__head h2 {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--a-muted);
+}
+.k-col__conta {
+  min-width: 1.375rem;
+  padding: 0 0.375rem;
+  border-radius: 999px;
+  background: rgba(26, 26, 26, 0.07);
+  font-size: 0.75rem;
+  text-align: center;
+  color: var(--a-muted);
+}
+.k-col__corpo { display: grid; gap: 0.5rem; padding: 0.625rem; align-content: start; }
+.k-col__vazia { color: var(--a-muted); font-size: 0.875rem; text-align: center; padding: 0.75rem 0; }
+
+.k-card {
+  display: grid;
+  gap: 0.375rem;
+  padding: 0.75rem;
+  background: var(--a-panel);
+  border: 1px solid var(--a-line);
+  border-radius: 10px;
+  cursor: grab;
+  transition: box-shadow 0.18s, opacity 0.18s;
+}
+.k-card:hover { box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07); }
+.k-card:active { cursor: grabbing; }
+.k-card.is-salvando { opacity: 0.5; pointer-events: none; }
+/* Parado tempo demais: barra a esquerda, sem inventar cor de alerta. */
+.k-card.is-alerta { border-left: 3px solid var(--a-danger); }
+
+.k-card__topo { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+.k-card__nome { font-size: 0.9375rem; line-height: 1.3; }
+.k-card__tag {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  letter-spacing: 0.03em;
+  color: var(--a-muted);
+  border: 1px dashed var(--a-line-strong);
+  border-radius: 999px;
+  padding: 0.0625rem 0.375rem;
+}
+.k-card__detalhe { font-size: 0.8125rem; color: var(--a-muted); line-height: 1.45; }
+.k-card__aviso { font-size: 0.75rem; color: var(--a-danger); }
+
+.k-card__rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--a-line);
+}
+.k-card__tempo { font-size: 0.75rem; color: var(--a-muted); }
+.k-card__acoes { display: flex; gap: 0.5rem; }
+.k-card__acoes a,
+.k-card__acoes button {
+  font-size: 0.75rem;
+  color: var(--a-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.k-card__acoes button:hover { color: var(--a-danger); }
+
+/* Caminho sem arrastar. Discreto no desktop, onde o arraste e o caminho
+   principal; no celular vira a unica forma de mover. */
+.k-card__mover select {
+  width: 100%;
+  padding: 0.3125rem 0.5rem;
+  border: 1px solid var(--a-line);
+  border-radius: 6px;
+  background: var(--a-panel);
+  font-size: 0.75rem;
+  color: var(--a-muted);
+}
+@media (hover: hover) and (pointer: fine) {
+  .k-card__mover { opacity: 0; transition: opacity 0.18s; }
+  .k-card:hover .k-card__mover,
+  .k-card:focus-within .k-card__mover { opacity: 1; }
+}
+
+/* ---------------------------------------------------------------- agenda */
+
+.ag-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+  gap: 1.25rem;
+  align-items: start;
+}
+@media (max-width: 1100px) { .ag-layout { grid-template-columns: minmax(0, 1fr); } }
+
+.ag-semana {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+@media (max-width: 900px) { .ag-semana { grid-template-columns: minmax(0, 1fr); } }
+
+.ag-dia {
+  min-width: 0;
+  border: 1px solid var(--a-line);
+  border-radius: 10px;
+  background: var(--a-panel);
+  overflow: hidden;
+}
+.ag-dia.is-hoje { border-color: var(--a-accent); }
+.ag-dia__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0.5rem 0.625rem;
+  border-bottom: 1px solid var(--a-line);
+  background: rgba(26, 26, 26, 0.02);
+}
+.ag-dia.is-hoje .ag-dia__head { background: var(--a-accent); color: #f2f1ed; }
+.ag-dia__semana { font-size: 0.6875rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.ag-dia__numero { font-family: var(--font-display); font-size: 1.125rem; }
+.ag-dia__corpo { display: grid; gap: 0.375rem; padding: 0.5rem; align-content: start; min-height: 4rem; }
+.ag-dia__vazio { color: var(--a-muted); font-size: 0.8125rem; text-align: center; }
+
+.ag-item {
+  display: grid;
+  gap: 0.125rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--a-line);
+  font-size: 0.8125rem;
+  background: var(--a-panel);
+}
+.ag-item.is-pendente { border-style: dashed; }
+.ag-item.is-confirmado { background: var(--a-accent); border-color: var(--a-accent); color: #f2f1ed; }
+.ag-item.is-realizado { opacity: 0.6; }
+.ag-item.is-faltou { border-color: var(--a-danger); }
+.ag-item.is-faltou .ag-item__nome { text-decoration: line-through; }
+.ag-item__hora { font-weight: 600; }
+.ag-item__nome { line-height: 1.3; }
+.ag-item__proc, .ag-item__status { font-size: 0.75rem; opacity: 0.8; }
+.ag-item__alerta { font-weight: 700; color: var(--a-danger); }
+.ag-item.is-confirmado .ag-item__alerta { color: #f2f1ed; }
+.ag-item__acoes { display: flex; gap: 0.5rem; margin-top: 0.25rem; }
+.ag-item__acoes button {
+  font-size: 0.6875rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  color: inherit;
+  opacity: 0.85;
+}
+.ag-item__acoes button:hover { opacity: 1; }
+
+/* A fila fica presa no topo enquanto a semana rola: confirmar exige olhar o dia
+   em volta, entao os dois precisam estar visiveis ao mesmo tempo. */
+.ag-fila {
+  position: sticky;
+  top: 1rem;
+  border: 1px solid var(--a-line);
+  border-radius: 12px;
+  background: var(--a-panel);
+  padding: 0.875rem;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ag-fila__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+.ag-fila__head h2 { font-family: var(--font-body); font-size: 1rem; font-weight: 600; }
+.ag-fila__lista { display: grid; gap: 0.75rem; }
+.ag-pend {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border: 1px dashed var(--a-line-strong);
+  border-radius: 10px;
+}
+.ag-pend__quando { font-size: 0.875rem; color: var(--a-accent); }
+.ag-pend__msg { font-size: 0.8125rem; color: var(--a-muted); font-style: italic; }
+.ag-pend__acoes, .ag-pend__recusa { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-top: 0.375rem; }
+.ag-pend__recusa { flex-direction: column; align-items: stretch; }
+
+/* ------------------------------------------------------------- pacientes */
+
+.p-master { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.p-master.tem-ficha { grid-template-columns: minmax(16rem, 21rem) minmax(0, 1fr); }
+@media (max-width: 900px) {
+  .p-master.tem-ficha { grid-template-columns: minmax(0, 1fr); }
+  /* No celular a lista sai de cena quando ha ficha aberta, em vez de virar
+     drawer: sem overlay, sem trava de scroll, sem primitivo novo. */
+  .p-master.tem-ficha .p-lista { display: none; }
+}
+
+.p-lista { display: grid; gap: 0.75rem; align-content: start; }
+.p-lista__itens { display: grid; gap: 2px; }
+.p-lista__item {
+  display: grid;
+  gap: 0.125rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.625rem 0.75rem;
+  border-radius: 8px;
+  position: relative;
+}
+.p-lista__item:hover { background: rgba(26, 26, 26, 0.04); }
+.p-lista__item.is-active { background: var(--a-accent); color: #f2f1ed; }
+.p-lista__item.is-active .a-hint { color: rgba(242, 241, 237, 0.75); }
+.p-lista__alerta {
+  position: absolute; right: 0.625rem; top: 0.625rem;
+  color: var(--a-danger); font-weight: 700;
+}
+
+.p-ficha {
+  border: 1px solid var(--a-line);
+  border-radius: 12px;
+  background: var(--a-panel);
+  padding: 1.25rem;
+  display: grid;
+  gap: 1.25rem;
+  align-content: start;
+}
+.p-ficha__head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+  padding-bottom: 0.875rem; border-bottom: 1px solid var(--a-line);
+}
+.p-ficha__head h2 { font-family: var(--font-display); font-size: 1.375rem; font-weight: 400; }
+.p-ficha .a-form { max-width: none; }
+
+.p-hist { display: grid; gap: 0.75rem; padding-top: 1rem; border-top: 1px solid var(--a-line); }
+.p-hist h3 { font-family: var(--font-body); font-size: 0.9375rem; font-weight: 600; }
+.p-hist__lista { display: grid; gap: 0.625rem; }
+.p-hist__item {
+  display: grid; gap: 0.25rem;
+  padding: 0.75rem;
+  border: 1px solid var(--a-line);
+  border-radius: 10px;
+  font-size: 0.875rem;
+}
+.p-hist__topo { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+.p-hist__proximo { color: var(--a-accent); }
+.p-hist__form { margin-top: 0.5rem; }
+
+/* -------------------------------------------------------------- horarios */
+
+.h-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+.h-dia { padding: 0.75rem 0; border-top: 1px solid var(--a-line); }
+.h-dia:first-of-type { border-top: 0; }
+.h-dia__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 0.5rem; }
+.h-faixa { display: flex; align-items: end; gap: 0.5rem; margin-top: 0.375rem; }
+.h-faixa .a-field { flex: 0 1 8rem; }
+.h-faixa__ate { padding-bottom: 0.6875rem; color: var(--a-muted); font-size: 0.875rem; }
+
+/* ---------------------------------------------------------- compartilhado */
+
+.a-empty { display: grid; gap: 0.75rem; justify-items: start; padding: 1.5rem 0; }
+.a-search { display: grid; }
+.a-hint--ok { color: var(--a-accent); }

@@ -120,6 +120,83 @@ export function leadNotificationEmail({ name, phone, email, interest, message, s
   }
 }
 
+/**
+ * Aviso de solicitacao de horario.
+ *
+ * Diferente do aviso de lead num ponto que importa: aqui existe prazo. O pedido
+ * prende o horario e expira sozinho, entao o e-mail diz ate quando e leva direto
+ * pro painel, que e onde a Camilla confirma. O botao de WhatsApp vem depois — a
+ * ordem certa e confirmar primeiro, avisar depois.
+ */
+export function novaSolicitacaoEmail({ nome, telefone, email, procedimento, quando, expiraEm, mensagem, primeiraConsulta, painelUrl }) {
+  const digits = String(telefone || '').replace(/\D/g, '')
+  const waNumber = digits.length >= 12 ? digits : digits.length >= 10 ? `55${digits}` : ''
+  const primeiroNome = String(nome || '').trim().split(/\s+/)[0] || ''
+  const waText = encodeURIComponent(
+    `Ola${primeiroNome ? `, ${primeiroNome}` : ''}! Aqui e a Dra. Camilla Barros. Recebi seu pedido de horario pelo site.`
+  )
+
+  const botaoPainel = painelUrl
+    ? `<tr><td style="padding-top:24px;">
+        <a href="${esc(painelUrl)}"
+           style="display:inline-block;background:${AZUL};color:#FFFFFF;text-decoration:none;
+                  padding:13px 26px;border-radius:8px;font-size:15px;font-weight:500;">
+          Abrir a agenda e confirmar
+        </a>
+      </td></tr>`
+    : ''
+
+  const botaoWhats = waNumber
+    ? `<tr><td style="padding-top:12px;">
+        <a href="https://wa.me/${waNumber}?text=${waText}"
+           style="display:inline-block;color:${AZUL};text-decoration:underline;font-size:14px;">
+          Falar com ${esc(primeiroNome || 'a paciente')} no WhatsApp
+        </a>
+      </td></tr>`
+    : ''
+
+  const inner = `
+    <h1 style="margin:0 0 6px;font-size:21px;font-weight:600;color:${TEXTO};">Pedido de horario novo</h1>
+    <p style="margin:0 0 22px;font-size:14px;line-height:1.6;color:#5A6B73;">
+      ${esc(nome)} pediu um horario pelo site. O horario fica reservado ate voce confirmar${
+        expiraEm ? `, e o pedido expira em ${esc(expiraEm)}` : ''
+      }.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      ${linha('Quando', quando)}
+      ${linha('Procedimento', procedimento)}
+      ${linha('Nome', nome)}
+      ${linha('WhatsApp', telefone)}
+      ${linha('E-mail', email)}
+      ${linha('Primeira vez', primeiraConsulta ? 'Sim' : 'Nao')}
+      ${mensagem ? linha('Observacao', mensagem) : ''}
+      ${botaoPainel}
+      ${botaoWhats}
+    </table>`
+
+  const texto = [
+    'Pedido de horario novo',
+    '',
+    `Quando: ${quando || '-'}`,
+    `Procedimento: ${procedimento || '-'}`,
+    `Nome: ${nome || '-'}`,
+    `WhatsApp: ${telefone || '-'}`,
+    `E-mail: ${email || '-'}`,
+    `Primeira vez: ${primeiraConsulta ? 'Sim' : 'Nao'}`,
+    mensagem ? `Observacao: ${mensagem}` : '',
+    expiraEm ? `\nO pedido expira em ${expiraEm}.` : '',
+    painelUrl ? `Confirmar: ${painelUrl}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  return {
+    subject: `Pedido de horario: ${nome || 'sem nome'} — ${quando || ''}`.trim(),
+    htmlContent: wrap('Pedido de horario novo', inner),
+    textContent: texto,
+  }
+}
+
 /** Link de recuperacao de senha do painel. */
 export function passwordResetEmail({ username, resetUrl }) {
   const inner = `

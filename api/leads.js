@@ -5,6 +5,7 @@ import { checkOrigin } from './_lib/origin.js'
 import { clientIp, isLeadRateLimited, recordLead } from './_lib/rateLimit.js'
 import { sendBrevoEmail } from './_lib/brevo.js'
 import { leadNotificationEmail } from './_lib/emailTemplates.js'
+import { normalizaTelefone } from './_lib/telefone.js'
 
 /**
  * POST   -> formulario publico do site
@@ -45,9 +46,13 @@ export default async function handler(req, res) {
         return res.status(429).json({ ok: false, error: 'Voce ja enviou varias mensagens. Aguarde alguns minutos.' })
       }
 
+      // telefone_key normalizado ja na entrada: e por ele que o CRM cruza este
+      // contato com paciente e com pedido de horario da mesma pessoa. Calcular
+      // so na hora de exibir faria a mesma pessoa virar tres cards no funil.
       await sql`
-        INSERT INTO leads (name, phone, email, message, interest, source)
-        VALUES (${lead.name}, ${lead.phone}, ${lead.email}, ${lead.message}, ${lead.interest}, ${lead.source})
+        INSERT INTO leads (name, phone, telefone_key, email, message, interest, source)
+        VALUES (${lead.name}, ${lead.phone}, ${normalizaTelefone(lead.phone)},
+                ${lead.email}, ${lead.message}, ${lead.interest}, ${lead.source})
       `
       await recordLead(ip)
 

@@ -20,30 +20,85 @@
 .a-shell {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
-  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--a-bg);
   color: var(--a-text);
   font-family: var(--font-body);
   font-size: 0.9375rem;
 }
 
-/* ---- Sidebar ---- */
+/* ---- Sidebar ----
+   O scroll mora na nav, nao na barra inteira. Antes o overflow estava aqui, e
+   com a lista longa o "Sair" descia junto com o conteudo — pra deslogar era
+   preciso rolar ate o fim. Agora topo, seletor de espaco e "Sair" ficam
+   parados, e so a lista de secoes rola.
+
+   O que de fato impedia o scroll era outro: o Lenis rodava tambem no /admin e
+   assumia o wheel do documento, entao nenhum container interno recebia o
+   evento. Isso esta resolvido em App.jsx; esta parte e a estrutura correta. */
 .a-sidebar {
   background: var(--a-panel);
   border-right: 1px solid var(--a-line);
   padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
   position: sticky;
   top: 0;
-  height: 100vh;
-  overflow-y: auto;
+  /* dvh e nao vh: no celular a barra de endereco come os ultimos itens. */
+  height: 100dvh;
+  overflow: hidden;
 }
-.a-sidebar__top { display: grid; gap: 0.25rem; padding-inline: 0.5rem; }
+.a-sidebar__top { display: grid; gap: 0.25rem; padding-inline: 0.5rem; flex-shrink: 0; }
 .a-sidebar__brand { font-family: var(--font-display); font-size: 1.375rem; }
 .a-sidebar__view { font-size: 0.8125rem; color: var(--a-accent); text-decoration: underline; text-underline-offset: 3px; }
-.a-sidebar__nav { display: grid; gap: 2px; }
+
+/* ---- Seletor de espaco: Consultorio | Site ---- */
+.a-espacos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 10px;
+  background: rgba(26, 26, 26, 0.05);
+  flex-shrink: 0;
+}
+.a-espacos__item {
+  padding: 0.5rem 0.5rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--a-muted);
+  transition: background 0.18s, color 0.18s;
+}
+.a-espacos__item:hover { color: var(--a-text); }
+.a-espacos__item.is-active {
+  background: var(--a-panel);
+  color: var(--a-text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* flex:1 + min-height:0 e o par obrigatorio: sem o min-height, um filho flex
+   nao encolhe abaixo do proprio conteudo e o overflow-y e ignorado. */
+.a-sidebar__nav {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Sobra pro ultimo item nao encostar no botao de sair. */
+  padding-bottom: 0.5rem;
+}
+.a-sidebar__grupo {
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--a-muted);
+  padding: 1rem 0.75rem 0.25rem;
+}
+.a-sidebar__nav > .a-sidebar__grupo:first-child { padding-top: 0.25rem; }
 .a-sidebar__item {
   text-align: left;
   padding: 0.625rem 0.75rem;
@@ -54,7 +109,8 @@
 }
 .a-sidebar__item:hover { background: rgba(26, 26, 26, 0.04); color: var(--a-text); }
 .a-sidebar__item.is-active { background: var(--a-accent); color: #f2f1ed; }
-.a-sidebar__logout { margin-top: auto; }
+/* Sem margin-top:auto: quem ocupa a sobra agora e a nav, que rola. */
+.a-sidebar__logout { flex-shrink: 0; }
 
 .a-menutoggle { display: none; }
 
@@ -81,6 +137,9 @@
 
 /* ---- Area principal ---- */
 .a-main { padding: clamp(1.5rem, 4vw, 3rem); max-width: 1000px; width: 100%; }
+/* Agenda e funil precisam da largura toda: uma grade de semana ou seis colunas
+   de kanban nao cabem nos 1000px pensados pra formulario de conteudo. */
+.a-main--wide { max-width: none; padding: clamp(1rem, 2.5vw, 2rem); }
 .a-syncing {
   position: fixed; top: 1rem; right: 1rem; z-index: 50;
   background: #1a1a1a; color: #f2f1ed;
@@ -108,11 +167,19 @@
   font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--a-muted); font-weight: 500;
 }
+/* A lista e por atributo, entao todo tipo novo precisa entrar aqui — senao o
+   campo nasce com a aparencia crua do navegador no meio do painel. */
 .a-field input[type='text'],
 .a-field input[type='password'],
 .a-field input[type='number'],
+.a-field input[type='search'],
+.a-field input[type='tel'],
+.a-field input[type='email'],
+.a-field input[type='date'],
+.a-field input[type='time'],
 .a-field textarea,
 .a-field select,
+.a-search__input,
 .a-stringlist input,
 .a-stringlist textarea,
 .a-media__side input {
@@ -126,6 +193,7 @@
   transition: border-color 0.18s, box-shadow 0.18s;
 }
 .a-field input:focus, .a-field textarea:focus, .a-field select:focus,
+.a-search__input:focus,
 .a-stringlist input:focus, .a-stringlist textarea:focus, .a-media__side input:focus {
   outline: none;
   border-color: var(--a-accent);

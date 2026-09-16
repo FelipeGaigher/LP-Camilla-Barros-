@@ -50,7 +50,11 @@ export function EditModeProvider({ children }) {
   useEffect(() => {
     if (!isAuthenticated) return
     const onKey = (e) => {
-      const noCampo = e.target?.closest?.('input, textarea, [contenteditable="true"]')
+      // select e button tambem consomem tecla: com o foco num deles, apertar E
+      // entrava no modo de edicao por cima do que a Camilla estava fazendo.
+      const noCampo = e.target?.closest?.(
+        'input, textarea, select, button, [contenteditable="true"], [role="radio"], [role="gridcell"]'
+      )
       const salvar = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's'
       const alternar = e.key === 'e' && !e.ctrlKey && !e.metaKey && !e.altKey && !noCampo
 
