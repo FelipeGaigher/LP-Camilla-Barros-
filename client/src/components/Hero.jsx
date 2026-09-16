@@ -1,7 +1,8 @@
 import { motion, useReducedMotion } from 'motion/react'
+import { useNavigate } from 'react-router-dom'
 import { podeAnimar } from '../lib/motionEnv'
 import { useSiteData } from '../context/SiteDataContext'
-import { scrollToAnchor } from './SmoothScroll'
+import { irPara } from '../lib/navegacao'
 import { WhatsAppIcon } from './Chrome'
 import { useEditMode } from '../context/EditModeContext'
 import EditableText from './editable/EditableText'
@@ -31,6 +32,7 @@ function ChipIcon({ name }) {
 
 export default function Hero() {
   const { data } = useSiteData()
+  const navigate = useNavigate()
   const hero = data.hero
   const cred = data.credenciais
   // Sem navegador (prerender de build) o tratamento e o mesmo de quem pediu
@@ -38,9 +40,9 @@ export default function Hero() {
   const reduce = useReducedMotion() || !podeAnimar
   const { isEditing } = useEditMode()
 
-  const go = (e, href) => {
-    if (scrollToAnchor(href)) e.preventDefault()
-  }
+  // irPara resolve ancora, rota e link externo. Sem ele, um href de rota faria
+  // navegacao cheia, recarregando o bundle e perdendo o estado da SPA.
+  const go = (e, href) => irPara(e, href, navigate)
 
   const linhas = [hero.title, hero.titleAccent].filter(Boolean)
   const anim = (delay) =>
@@ -91,8 +93,10 @@ export default function Hero() {
           </motion.div>
 
           <motion.div className="btn-row hero__ctas" {...anim(0.82)}>
+            {/* O icone so aparece quando o botao leva mesmo pro WhatsApp. Num
+                CTA que rola pro formulario ele mentiria sobre o destino. */}
             <a className="btn btn--primary" href={hero.ctaPrimary.href} onClick={(e) => go(e, hero.ctaPrimary.href)}>
-              <WhatsAppIcon size={17} />
+              {hero.ctaPrimary.href?.includes('wa.me') && <WhatsAppIcon size={17} />}
               <EditableText path="hero.ctaPrimary.label" />
             </a>
             {hero.ctaSecondary?.label && (

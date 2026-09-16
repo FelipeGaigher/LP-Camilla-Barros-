@@ -236,10 +236,27 @@ export const SCHEMA = {
         ],
       },
       { key: 'formEnabled', label: 'Mostrar formulario', type: 'toggle' },
+      {
+        key: 'agendamento', label: 'Escolher horario no formulario', type: 'group',
+        hint: 'Os horarios em si vem de Consultorio > Horarios de atendimento. Aqui so os textos. Se o agendamento estiver desligado la, este bloco nao aparece no site.',
+        fields: [
+          { key: 'titulo', label: 'Titulo do bloco', type: 'text' },
+          { key: 'texto', label: 'Texto de apoio', type: 'textarea' },
+          {
+            key: 'aviso', label: 'Aviso antes de enviar', type: 'textarea',
+            hint: 'Precisa deixar claro que e um pedido, nao uma confirmacao. Nao escreva "confirmado" nem "vaga garantida".',
+          },
+          { key: 'sucesso', label: 'Mensagem apos pedir horario', type: 'text' },
+          { key: 'semHorario', label: 'Quando o dia nao tem horario livre', type: 'text' },
+          { key: 'verMais', label: 'Texto do botao que abre os horarios', type: 'text' },
+          { key: 'limpar', label: 'Texto para desistir do horario', type: 'text' },
+        ],
+      },
       { key: 'interesses', label: 'Opcoes do campo "sobre o que quer falar"', type: 'stringlist' },
       { key: 'successMessage', label: 'Mensagem apos enviar', type: 'text' },
     ],
   },
+
 
   footer: {
     label: 'Rodape',
@@ -348,26 +365,67 @@ export const SCHEMA = {
   },
 }
 
-// Ordem e rotulos do menu lateral. 'visibility' e 'leads' tem telas proprias.
-export const SIDEBAR = [
-  { key: 'hero', label: 'Topo' },
-  { key: 'credenciais', label: 'Identificacao' },
-  { key: 'video', label: 'Video' },
-  { key: 'tratamentos', label: 'Tratamentos' },
-  { key: 'sintomas', label: 'Sinais' },
-  { key: 'sobre', label: 'Sobre' },
-  { key: 'consultorio', label: 'Consultorio' },
-  { key: 'depoimentos', label: 'Depoimentos' },
-  { key: 'faq', label: 'Perguntas' },
-  { key: 'contato', label: 'Contato' },
-  { key: 'nav', label: 'Menu' },
-  { key: 'footer', label: 'Rodape' },
-  { key: 'visibility', label: 'Secoes do site', custom: true },
-  { key: 'leads', label: 'Contatos recebidos', custom: true },
-  { key: 'seo', label: 'SEO' },
-  { key: 'settings', label: 'Configuracoes' },
-  { key: 'conta', label: 'Minha conta', custom: true },
+/**
+ * Os dois espacos do painel.
+ *
+ * Tocar o consultorio e editar a landing page sao trabalhos diferentes, feitos
+ * em dias diferentes: a agenda e todo dia, o texto do "Sobre" e uma vez por
+ * trimestre. Numa lista so, os itens de uso diario ficavam perdidos no meio de
+ * doze secoes de conteudo.
+ *
+ * Consultorio abre por padrao, porque e o uso real.
+ */
+export const ESPACOS = [
+  { id: 'consultorio', label: 'Consultorio' },
+  { id: 'site', label: 'Site' },
 ]
+
+export const ESPACO_PADRAO = 'consultorio'
+
+/**
+ * Menu lateral. Cada item pertence a um espaco.
+ *
+ * `custom: true` = tela propria (registrada no mapa CUSTOM do AdminPanel).
+ * Sem isso, o editor e gerado a partir do SCHEMA acima.
+ * `{ grupo }` e so um rotulo separador, nao e clicavel.
+ */
+export const SIDEBAR = [
+  // ----------------------------------------------------------- consultorio
+  { key: 'agenda', label: 'Agenda', custom: true, espaco: 'consultorio' },
+  { key: 'funil', label: 'Funil', custom: true, espaco: 'consultorio' },
+  { key: 'pacientes', label: 'Pacientes', custom: true, espaco: 'consultorio' },
+  { grupo: 'Configuracao', espaco: 'consultorio' },
+  { key: 'horarios', label: 'Horarios de atendimento', custom: true, espaco: 'consultorio' },
+  { key: 'conta', label: 'Minha conta', custom: true, espaco: 'consultorio' },
+
+  // ------------------------------------------------------------------ site
+  { key: 'hero', label: 'Topo', espaco: 'site' },
+  { key: 'credenciais', label: 'Identificacao', espaco: 'site' },
+  { key: 'video', label: 'Video', espaco: 'site' },
+  { key: 'tratamentos', label: 'Tratamentos', espaco: 'site' },
+  { key: 'sintomas', label: 'Sinais', espaco: 'site' },
+  { key: 'sobre', label: 'Sobre', espaco: 'site' },
+  { key: 'consultorio', label: 'Consultorio', espaco: 'site' },
+  { key: 'depoimentos', label: 'Depoimentos', espaco: 'site' },
+  { key: 'faq', label: 'Perguntas', espaco: 'site' },
+  { key: 'contato', label: 'Contato', espaco: 'site' },
+  { grupo: 'Estrutura', espaco: 'site' },
+  { key: 'nav', label: 'Menu', espaco: 'site' },
+  { key: 'footer', label: 'Rodape', espaco: 'site' },
+  { key: 'visibility', label: 'Secoes do site', custom: true, espaco: 'site' },
+  { key: 'seo', label: 'SEO', espaco: 'site' },
+  { key: 'settings', label: 'Configuracoes', espaco: 'site' },
+]
+
+/** Itens clicaveis de um espaco (descarta os separadores). */
+export function itensDoEspaco(espaco) {
+  return SIDEBAR.filter((i) => i.espaco === espaco && i.key)
+}
+
+/** Primeiro item clicavel de um espaco — o destino ao trocar de aba. */
+export function primeiroItem(espaco) {
+  return itensDoEspaco(espaco)[0]?.key
+}
 
 export const SECTION_LABELS = {
   credenciais: 'Identificacao e valores',

@@ -38,7 +38,7 @@ export default function AccountPanel() {
         </div>
       </header>
 
-      <div className="a-editor__body">
+      <div className="a-editor__body a-painel">
         <form className="a-form" onSubmit={submit}>
           <div className="a-field">
             <label htmlFor="cur">Senha atual</label>

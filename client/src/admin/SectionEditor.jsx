@@ -90,7 +90,11 @@ export default function SectionEditor({ sectionKey, onDraftChange, focusPath }) 
         </div>
       </header>
 
-      <div className="a-editor__body">
+      {/* Os campos ficam num container. Soltos sobre o fundo eles pareciam
+          flutuar, e num editor com quinze campos nao havia nada delimitando
+          onde a secao comeca e termina. Grupo e lista ja tinham borda propria,
+          o que fazia o topo do formulario parecer inacabado por comparacao. */}
+      <div className="a-editor__body a-painel">
         {schema.fields.map((def) => (
           <FieldNode
             key={def.key}

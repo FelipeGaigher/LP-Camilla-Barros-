@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { SiteDataProvider, useSiteData } from './context/SiteDataContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { EditModeProvider } from './context/EditModeContext'
@@ -16,12 +16,19 @@ import './styles/editmode.css'
 function Shell() {
   const { data, ready } = useSiteData()
   const s = data.settings
+  const { pathname } = useLocation()
+
+  // O painel fica fora do scroll suave. O Lenis assume o wheel do documento
+  // inteiro, e quem paga sao os containers que rolam por dentro — a sidebar e o
+  // quadro do funil simplesmente nao rolavam. Fora isso, inercia de 1,15s e
+  // efeito de site institucional: numa ferramenta de trabalho vira atraso.
+  const noPainel = pathname.startsWith('/admin')
 
   return (
     <>
       <SeoHead />
-      <SmoothScroll enabled={s.smoothScroll} />
-      <Grain enabled={s.grain} />
+      <SmoothScroll enabled={s.smoothScroll && !noPainel} />
+      <Grain enabled={s.grain && !noPainel} />
       <LoadingScreen enabled={s.loadingScreen && !ready} label={data.nav.logoText} />
       <EditToolbar />
       <Routes>

@@ -1,12 +1,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { fetchLeads, deleteLead } from '../../data/api'
+import { brtDataHora, brtDateKey } from '../../lib/brt'
 
+// Antes formatava no fuso do navegador, que acerta em Vitoria por acidente e
+// erra em qualquer outro lugar. O helper fixa Brasilia.
 function fmt(dateStr) {
-  try {
-    return new Date(dateStr).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
-  } catch {
-    return dateStr
-  }
+  return brtDataHora(dateStr) || dateStr || ''
 }
 
 export default function LeadsPanel() {
@@ -38,7 +37,7 @@ export default function LeadsPanel() {
     const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
     const a = document.createElement('a')
     a.href = URL.createObjectURL(blob)
-    a.download = `contatos-${new Date().toISOString().slice(0, 10)}.csv`
+    a.download = `contatos-${brtDateKey(new Date())}.csv`
     a.click()
     URL.revokeObjectURL(a.href)
   }

@@ -242,6 +242,27 @@ export const defaults = {
       label: 'Chamar no WhatsApp',
     },
     formEnabled: true,
+
+    // Escolha de horario dentro do proprio formulario. Nao e pagina separada:
+    // o formulario de contato ja e o lugar onde a pessoa chega, e mandar ela
+    // pra outra tela e um passo a mais pra desistir.
+    //
+    // Escolher horario e OPCIONAL. Sem horario, o envio continua sendo o mesmo
+    // contato de sempre; com horario, vira pedido de agendamento.
+    //
+    // Vocabulario travado pelo que a coisa e: a paciente PEDE um horario, nao
+    // reserva. Escrever "confirmado" ou "vaga garantida" seria mentira de
+    // interface — quem confirma e a Camilla, depois.
+    agendamento: {
+      titulo: 'Prefere ja escolher um horario?',
+      texto: 'Opcional. Escolha um dia e um horario e a Camilla confirma pelo WhatsApp.',
+      aviso: 'Este e um pedido de horario, nao uma confirmacao. A Camilla confirma e voce recebe o retorno pelo WhatsApp.',
+      sucesso: 'Pedido de horario enviado. A Camilla confirma pelo WhatsApp.',
+      semHorario: 'Nesse dia nao ha horario livre. Escolha outro dia.',
+      verMais: 'Ver horarios',
+      limpar: 'Enviar so a mensagem',
+    },
+
     interesses: [
       'Nao sei ainda, quero uma avaliacao',
       'Lentes em porcelana ou resina',

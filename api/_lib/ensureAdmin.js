@@ -70,6 +70,13 @@ export async function ensureAdmin() {
     )
   `
 
+  // telefone_key chegou na 004 (funil do CRM). Precisa estar aqui, e nao so na
+  // migration, porque o POST publico de lead grava nesta coluna: se o deploy
+  // chegar antes do migrate, o formulario do site quebraria. As outras colunas
+  // da 004 ficam de fora de proposito — paciente_id tem FK pra uma tabela que
+  // so a migration cria.
+  await sql`ALTER TABLE leads ADD COLUMN IF NOT EXISTS telefone_key VARCHAR(20)`
+
   await sql`
     CREATE TABLE IF NOT EXISTS audit_log (
       id SERIAL PRIMARY KEY,

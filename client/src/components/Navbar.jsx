@@ -1,9 +1,11 @@
 import { useEffect, useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useSiteData } from '../context/SiteDataContext'
-import { scrollToAnchor } from './SmoothScroll'
+import { irPara } from '../lib/navegacao'
 
 export default function Navbar() {
   const { data } = useSiteData()
+  const navigate = useNavigate()
   const nav = data.nav
   const [scrolled, setScrolled] = useState(false)
   const [hidden, setHidden] = useState(false)
@@ -27,10 +29,10 @@ export default function Navbar() {
   }, [open])
 
   const go = (e, href) => {
-    if (scrollToAnchor(href)) {
-      e.preventDefault()
-      setOpen(false)
-    }
+    // irPara resolve ancora, rota e link externo. Sem ele um href de rota faria
+    // navegacao cheia, recarregando o bundle e perdendo o estado da SPA.
+    irPara(e, href, navigate)
+    if (!href?.startsWith('http')) setOpen(false)
   }
 
   return (

@@ -8,7 +8,9 @@ export const SiteDataContext = createContext(null)
 
 // Suba este numero sempre que a estrutura do defaults mudar de forma
 // incompativel: o cache local do visitante e descartado automaticamente.
-const DATA_VERSION = 2
+// 3: entrou contato.agendamento. Sem o bump, quem ja visitou o site fica com
+// o JSON antigo em cache e o bloco de horario abre sem texto nenhum.
+const DATA_VERSION = 3
 const VERSION_KEY = 'camilla_data_version'
 
 function clone(v) {
@@ -35,14 +37,41 @@ function markVersionCurrent() {
   } catch {}
 }
 
+function ehObjetoSimples(v) {
+  return v !== null && typeof v === 'object' && !Array.isArray(v)
+}
+
+/**
+ * Completa o que veio do banco com o que existe no defaults, em profundidade.
+ *
+ * Precisa ser recursivo. Antes so preenchia SECAO ausente, e campo novo dentro
+ * de uma secao ja existente nascia undefined: `seed.js` usa ON CONFLICT DO
+ * NOTHING, entao a linha de `contato` gravada antes de o campo existir continua
+ * la e vence. O sintoma e silencioso — o bloco novo aparece sem texto nenhum.
+ *
+ * Array nao e mesclado de proposito: uma lista que a Camilla reduziu a dois
+ * itens receberia os outros dois de volta a cada carga.
+ */
+function completar(base, vindo) {
+  if (vindo === undefined || vindo === null) return clone(base)
+  if (!ehObjetoSimples(base) || !ehObjetoSimples(vindo)) return vindo
+
+  const saida = { ...vindo }
+  for (const k of Object.keys(base)) {
+    saida[k] = completar(base[k], vindo[k])
+  }
+  return saida
+}
+
 /**
  * Preenche chaves que existem no defaults mas ainda nao no banco.
- * Evita que uma secao nova quebre o site antes do proximo seed.
+ * Evita que uma secao — ou um campo dentro dela — quebre o site antes do
+ * proximo seed.
  */
 function withDefaults(partial) {
   const state = {}
   for (const key of SECTION_KEYS) {
-    state[key] = partial?.[key] ?? clone(defaults[key])
+    state[key] = completar(defaults[key], partial?.[key])
   }
   // visibility precisa conter todas as secoes conhecidas
   const order = defaults.visibility.order

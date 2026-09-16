@@ -1,13 +1,15 @@
 import { useSiteData } from '../context/SiteDataContext'
+import { useNavigate } from 'react-router-dom'
 import Reveal from './Reveal'
-import { scrollToAnchor } from './SmoothScroll'
+import { irPara } from '../lib/navegacao'
 import EditableText from './editable/EditableText'
 import EditableImage from './editable/EditableImage'
 
 export default function Sobre() {
   const { data } = useSiteData()
+  const navigate = useNavigate()
   const s = data.sobre
-  const go = (e, href) => { if (scrollToAnchor(href)) e.preventDefault() }
+  const go = (e, href) => irPara(e, href, navigate)
 
   return (
     <section id="sobre" className="section section--surface">

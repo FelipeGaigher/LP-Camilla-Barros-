@@ -1,16 +1,23 @@
 import { useState } from 'react'
 import { useSiteData } from '../context/SiteDataContext'
 import { sendLead } from '../data/api'
+import { solicitarHorario } from '../data/agendaApi'
 import Reveal from './Reveal'
 import { waLink, WhatsAppIcon } from './Chrome'
 import EditableText from './editable/EditableText'
+import EscolherHorario from './EscolherHorario'
+
+const VAZIO = { name: '', phone: '', email: '', interest: '', message: '', website: '' }
 
 export default function Contato() {
   const { data } = useSiteData()
   const c = data.contato
   const f = data.footer
+  const ag = c.agendamento || {}
 
-  const [form, setForm] = useState({ name: '', phone: '', email: '', interest: '', message: '', website: '' })
+  const [form, setForm] = useState(VAZIO)
+  const [horario, setHorario] = useState(null)
+  const [conflito, setConflito] = useState(0)
   const [status, setStatus] = useState({ state: 'idle', text: '' })
 
   const wa = waLink(c.whatsapp.number, c.whatsapp.message)
@@ -23,14 +30,62 @@ export default function Contato() {
       setStatus({ state: 'error', text: 'Preencha o nome e ao menos um contato.' })
       return
     }
+
+    // Escolher horario e opcional, e e ele que decide o destino do envio. Sem
+    // horario, continua sendo exatamente o contato de sempre.
+    if (horario) return enviarPedido()
+
     setStatus({ state: 'sending', text: 'Enviando...' })
     const res = await sendLead({ ...form, source: 'formulario-site' })
     if (res?.ok) {
       setStatus({ state: 'ok', text: c.successMessage })
-      setForm({ name: '', phone: '', email: '', interest: '', message: '', website: '' })
+      setForm(VAZIO)
     } else {
       setStatus({ state: 'error', text: res?.error || 'Nao foi possivel enviar. Tente pelo WhatsApp.' })
     }
+  }
+
+  async function enviarPedido() {
+    // O endpoint de agendamento exige WhatsApp: e por ele que a confirmacao
+    // volta. O de contato aceita so e-mail, dai a checagem extra aqui.
+    if (!form.phone.trim()) {
+      setStatus({ state: 'error', text: 'Para marcar horario, informe o WhatsApp — e por ele que a confirmacao chega.' })
+      return
+    }
+
+    setStatus({ state: 'sending', text: 'Enviando seu pedido...' })
+    const res = await solicitarHorario({
+      nome: form.name,
+      telefone: form.phone,
+      email: form.email,
+      mensagem: form.message,
+      inicio: horario.inicio,
+      consentimento: true,
+      website: form.website,
+    })
+
+    if (res.ok) {
+      setStatus({ state: 'ok', text: ag.sucesso || c.successMessage })
+      setForm(VAZIO)
+      setHorario(null)
+      return
+    }
+
+    // Horario tomado entre carregar a lista e enviar nao e borda, e o contrato:
+    // a tela so sabe o que era verdade ha alguns segundos. Refaz a lista do dia
+    // e limpa a escolha invalida, sem tocar no que ela ja digitou.
+    if (res.code === 'HORARIO_OCUPADO' || res.code === 'HORARIO_INVALIDO') {
+      setHorario(null)
+      setConflito((n) => n + 1)
+      setStatus({ state: 'error', text: 'Esse horario acabou de ser pedido por outra pessoa. Escolha outro.' })
+      return
+    }
+
+    if (res.code === 'REDE') {
+      setStatus({ state: 'error', text: 'Sem conexao. Tente de novo ou fale pelo WhatsApp.' })
+      return
+    }
+    setStatus({ state: 'error', text: res.error })
   }
 
   return (
@@ -117,6 +172,16 @@ export default function Contato() {
                 <textarea id="f-message" value={form.message} onChange={set('message')} />
               </div>
 
+              <EscolherHorario
+                textos={ag}
+                valor={horario}
+                conflito={conflito}
+                onEscolher={(s) => {
+                  setHorario(s)
+                  setStatus({ state: 'idle', text: '' })
+                }}
+              />
+
               {/* honeypot anti-bot, invisivel para pessoas */}
               <div className="field field--hp" aria-hidden="true">
                 <label htmlFor="f-website">Nao preencha</label>
@@ -124,7 +189,11 @@ export default function Contato() {
               </div>
 
               <button className="btn btn--primary" type="submit" disabled={status.state === 'sending'}>
-                {status.state === 'sending' ? 'Enviando...' : 'Enviar mensagem'}
+                {status.state === 'sending'
+                  ? 'Enviando...'
+                  : horario
+                    ? 'Pedir este horario'
+                    : 'Enviar mensagem'}
               </button>
 
               {status.text && (
