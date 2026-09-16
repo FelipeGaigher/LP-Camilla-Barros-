@@ -365,7 +365,9 @@ function GradeTempo({ dias, eventos, regua, hoje, umDiaSo, onMarcar, onConfirmar
                 {brtTime(e.inicio)}
                 {e.primeiraConsulta && <em className="ag-ev__primeira" title="Primeira consulta">1a</em>}
               </span>
-              <span className="ag-ev__nome">{e.nome || 'Sem nome'}</span>
+              {/* O rotulo de quem nao tem paciente ja vem pronto do servidor,
+                  pra as tres vistas nao inventarem textos diferentes. */}
+              <span className={`ag-ev__nome ${e.semPaciente ? 'is-vago' : ''}`}>{e.nome}</span>
               <span className="ag-ev__proc">{e.procedimento}</span>
 
               {/* Pedido e confirmado aqui mesmo, e nao numa fila lateral: pra

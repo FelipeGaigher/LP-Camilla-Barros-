@@ -351,7 +351,10 @@ function paraPainel(l) {
     status: l.status,
     origem: l.origem,
     procedimento: l.procedimento_nome,
-    nome: l.paciente_nome || l.solicitante_nome,
+    // Encaixe criado pelo painel sem escolher paciente e legitimo: e ela
+    // bloqueando a cadeira. "Sem nome" fazia parecer cadastro incompleto.
+    nome: l.paciente_nome || l.solicitante_nome || 'Horario reservado',
+    semPaciente: !l.paciente_nome && !l.solicitante_nome,
     telefone: l.solicitante_telefone,
     email: l.solicitante_email,
     mensagem: l.solicitante_mensagem,

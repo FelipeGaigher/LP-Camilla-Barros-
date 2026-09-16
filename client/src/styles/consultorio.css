@@ -406,6 +406,9 @@
   border: 1px solid currentColor; opacity: 0.7;
 }
 .ag-ev__nome { line-height: 1.25; }
+/* Horario bloqueado sem paciente: em italico, pra distinguir de nome proprio
+   num relance sem precisar ler. */
+.ag-ev__nome.is-vago { font-style: italic; opacity: 0.85; }
 .ag-ev__proc, .ag-ev__status { font-size: 0.6875rem; opacity: 0.8; }
 .ag-ev__acoes { display: flex; gap: 0.625rem; margin-top: auto; padding-top: 0.25rem; }
 .ag-ev__acoes button {
