@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
-import { listarPacientes, buscarFicha, salvarPaciente, registrarAtendimento } from '../../data/agendaApi'
+import {
+  listarPacientes, buscarFicha, salvarPaciente, registrarAtendimento, arquivarCard,
+} from '../../data/agendaApi'
 import { ESTAGIOS } from '../../lib/funil'
+import { brtDataCurta } from '../../lib/brt'
 import PanelState, { SearchField } from '../ui/PanelState'
 
 /**
@@ -196,9 +199,56 @@ function Ficha({ id, onFechar, onSalvou }) {
           </div>
         </form>
 
+        {ficha?.contatos?.length > 0 && (
+          <Recados
+            contatos={ficha.contatos}
+            onMudou={() => id && buscarFicha(id).then((r) => r.ok && setFicha(r.data))}
+          />
+        )}
+
         {ficha && <Historico ficha={ficha} onMudou={() => id && buscarFicha(id).then((r) => r.ok && setFicha(r.data))} />}
       </PanelState>
     </section>
+  )
+}
+
+/**
+ * Mensagens que a paciente mandou pelo formulario do site.
+ *
+ * O card dela no funil avisa que chegou recado, mas o texto so pode ser lido
+ * aqui — e sem isso o aviso seria um alerta que nao leva a lugar nenhum.
+ *
+ * "Marcar como respondida" arquiva o contato: e o que tira o aviso do card.
+ * Sem esse gesto o alerta ficaria aceso para sempre.
+ */
+function Recados({ contatos, onMudou }) {
+  async function responder(id) {
+    const r = await arquivarCard({ tipo: 'lead', id })
+    if (r.ok) onMudou()
+  }
+
+  return (
+    <div className="p-hist">
+      <h3>Mensagens pelo site</h3>
+      <ul className="p-hist__lista">
+        {contatos.map((m) => (
+          <li key={m.id} className="p-hist__item">
+            <div className="p-hist__topo">
+              <strong>{brtDataCurta(m.created_at)}</strong>
+              <span className="a-hint">{m.interest || m.source}</span>
+            </div>
+            {m.message && <p>{m.message}</p>}
+            {m.arquivado_em ? (
+              <span className="a-hint">Respondida</span>
+            ) : (
+              <button type="button" className="a-btn a-btn--sm" onClick={() => responder(m.id)}>
+                Marcar como respondida
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 

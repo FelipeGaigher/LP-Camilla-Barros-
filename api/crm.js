@@ -79,7 +79,7 @@ export default async function handler(req, res) {
  * Dedupe por telefone: quem ja e paciente nao aparece de novo como lead.
  */
 async function acaoKanban(sql, req, res, auth) {
-  const [pacientes, leads, pedidos, agenda] = await sql.transaction(
+  const [pacientes, leads, pedidos, agenda, recados] = await sql.transaction(
     [
       sql`
         SELECT p.id, p.nome, p.telefone, p.telefone_key, p.situacao, p.situacao_em,
@@ -128,16 +128,33 @@ async function acaoKanban(sql, req, res, auth) {
          WHERE status IN ('pendente','confirmado') AND inicio > NOW() AND paciente_id IS NOT NULL
          GROUP BY paciente_id
       `,
+      // Mensagem de quem JA e paciente. O card dela nao e duplicado no funil,
+      // entao sem isto a mensagem nao apareceria em lugar nenhum.
+      sql`
+        SELECT paciente_id, COUNT(*)::int AS total, MAX(created_at) AS ultima
+          FROM leads
+         WHERE paciente_id IS NOT NULL AND arquivado_em IS NULL
+         GROUP BY paciente_id
+      `,
     ],
     { readOnly: true }
   )
 
   const proximoPorPaciente = new Map(agenda.map((a) => [a.paciente_id, a.proximo]))
+  const recadoPorPaciente = new Map(recados.map((r) => [r.paciente_id, r]))
   const agora = new Date()
   const cards = []
 
   for (const p of pacientes) {
     const proximo = proximoPorPaciente.get(p.id) || null
+    const recado = recadoPorPaciente.get(p.id) || null
+
+    // Recado nao respondido e mais urgente que card parado: alguem escreveu e
+    // esta esperando. Por isso ele vence o alerta de tempo e o aviso da ficha.
+    const aviso = recado
+      ? `${recado.total === 1 ? 'Mandou mensagem' : `${recado.total} mensagens`} ${tempoRelativo(recado.ultima, agora)}`
+      : p.alerta || null
+
     cards.push({
       tipo: 'paciente',
       id: p.id,
@@ -147,9 +164,10 @@ async function acaoKanban(sql, req, res, auth) {
       estagio: p.situacao,
       desde: new Date(p.situacao_em).toISOString(),
       tempo: tempoRelativo(p.situacao_em, agora),
-      alerta: estaParado(p.situacao, p.situacao_em, agora),
+      alerta: !!recado || estaParado(p.situacao, p.situacao_em, agora),
+      temRecado: !!recado,
       ordem: p.ordem_funil,
-      aviso: p.alerta || null,
+      aviso,
       detalhe: detalhePaciente(p, proximo, agora),
       proximo: proximo ? brtLabel(proximo, { comDiaSemana: true }) : null,
     })
@@ -325,7 +343,13 @@ async function promoverLead(sql, leadId, estagio) {
         RETURNING id
       `
 
-  await sql`UPDATE leads SET paciente_id = ${paciente.id} WHERE id = ${leadId}`
+  // Arquiva junto: arrastar o card ja e o gesto de "tratei este contato". Sem
+  // isso a mensagem original ficaria contando como recado nao respondido e o
+  // alerta do card nasceria aceso, logo depois de ela ter acabado de olhar.
+  await sql`
+    UPDATE leads SET paciente_id = ${paciente.id}, arquivado_em = NOW()
+     WHERE id = ${leadId}
+  `
 
   // A mensagem que ela escreveu no formulario e contexto que a Camilla vai
   // querer ler na ficha. Sem isso, promover o lead perderia o unico texto que
@@ -429,8 +453,10 @@ async function acaoFicha(sql, req, res, auth) {
                regiao, proximos_passos, observacoes, retorno_semanas, cancelado_motivo
           FROM agendamentos WHERE paciente_id = ${id} ORDER BY inicio DESC LIMIT 200
       `,
+      // Arquivada continua aparecendo: a ficha e o registro do que a pessoa
+      // escreveu. O que muda e so a acao — respondida nao pede resposta.
       sql`
-        SELECT id, interest, message, source, created_at
+        SELECT id, interest, message, source, created_at, arquivado_em
           FROM leads WHERE paciente_id = ${id} ORDER BY created_at DESC LIMIT 10
       `,
     ],
