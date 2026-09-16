@@ -8,8 +8,8 @@
 // a defesa e a propria sessao, que um site terceiro nao consegue forjar.
 
 const ALLOWED_HOSTS_REGEX = [
-  /^camillabarros\.com\.br$/,
-  /^www\.camillabarros\.com\.br$/,
+  /^dracamillabarros\.com$/,
+  /^www\.dracamillabarros\.com$/,
   /^lp-camilla-barros\.vercel\.app$/,
   /^lp-camilla-barros-[a-z0-9-]+\.vercel\.app$/, // previews
   /^lp-camilla-barros-git-[a-z0-9-]+\.vercel\.app$/, // previews de branch

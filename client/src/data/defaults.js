@@ -21,7 +21,7 @@ export const defaults = {
       'Consultorio odontologico na Enseada do Sua, Vitoria ES. Lentes em porcelana e resina, clareamento, gengivoplastia, limpeza e placa para bruxismo.',
     ogImage: '',
     favicon: '',
-    siteUrl: 'https://dracamillabarros.com.br',
+    siteUrl: 'https://dracamillabarros.com',
     themeColor: '#FDFAF6',
     // Dados estruturados schema.org/Dentist (SEO local)
     schema: {
