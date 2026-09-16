@@ -15,6 +15,38 @@ function esc(s) {
     .replace(/"/g, '&quot;')
 }
 
+// URL absoluta: cliente de e-mail nao resolve caminho relativo, e o Gmail
+// descarta imagem em data:. Os arquivos sao servidos por client/public/marca.
+const MARCA_BASE = 'https://dracamillabarros.com/marca'
+
+/**
+ * Cabecalho com o monograma CB.
+ *
+ * Usa o monograma, nao o lockup inteiro: num card de 560px o lockup ficaria
+ * com a tagline em 4px, ilegivel. O monograma le bem em qualquer tamanho.
+ *
+ * Sempre a versao azul, sem troca por modo escuro. O card tem fundo #FFFFFF
+ * fixo no HTML e nenhum cliente o escurece, entao a variante branca so
+ * produziria logo branco sobre fundo branco. Ja aconteceu no Gmail escuro.
+ */
+function cabecalho() {
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="padding-right:14px;vertical-align:middle;line-height:0;">
+                <img src="${MARCA_BASE}/azul/monograma.png"
+                     width="60" height="50" alt="Dra. Camilla Barros"
+                     style="display:block;border:0;outline:none;
+                            text-decoration:none;width:60px;height:50px;" />
+              </td>
+              <td style="vertical-align:middle;">
+                <div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:${AZUL_CLARO};">
+                  Dra. Camilla Barros
+                </div>
+              </td>
+            </tr>
+          </table>`
+}
+
 function wrap(title, inner) {
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8" />
@@ -25,10 +57,8 @@ function wrap(title, inner) {
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
              style="max-width:560px;background:#FFFFFF;border-radius:12px;overflow:hidden;">
-        <tr><td style="padding:28px 32px 20px;border-bottom:1px solid #E6EBED;">
-          <div style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:${AZUL_CLARO};">
-            Dra. Camilla Barros
-          </div>
+        <tr><td style="padding:24px 32px 18px;border-bottom:1px solid #E6EBED;">
+          ${cabecalho()}
         </td></tr>
         <tr><td style="padding:28px 32px 32px;">${inner}</td></tr>
       </table>
@@ -64,20 +94,22 @@ export function leadNotificationEmail({ name, phone, email, interest, message, s
   )
 
   const botaoWhats = waNumber
-    ? `<tr><td style="padding-top:24px;">
+    ? `<tr><td colspan="2" style="padding-top:24px;">
         <a href="https://wa.me/${waNumber}?text=${waText}"
            style="display:inline-block;background:${AZUL};color:#FFFFFF;text-decoration:none;
-                  padding:13px 26px;border-radius:8px;font-size:15px;font-weight:500;">
+                  padding:13px 26px;border-radius:8px;font-size:15px;font-weight:500;
+                  white-space:nowrap;">
           Responder no WhatsApp
         </a>
       </td></tr>`
     : ''
 
   const botaoEmail = !waNumber && email
-    ? `<tr><td style="padding-top:24px;">
+    ? `<tr><td colspan="2" style="padding-top:24px;">
         <a href="mailto:${esc(email)}"
            style="display:inline-block;background:${AZUL};color:#FFFFFF;text-decoration:none;
-                  padding:13px 26px;border-radius:8px;font-size:15px;font-weight:500;">
+                  padding:13px 26px;border-radius:8px;font-size:15px;font-weight:500;
+                  white-space:nowrap;">
           Responder por e-mail
         </a>
       </td></tr>`
@@ -137,17 +169,18 @@ export function novaSolicitacaoEmail({ nome, telefone, email, procedimento, quan
   )
 
   const botaoPainel = painelUrl
-    ? `<tr><td style="padding-top:24px;">
+    ? `<tr><td colspan="2" style="padding-top:24px;">
         <a href="${esc(painelUrl)}"
            style="display:inline-block;background:${AZUL};color:#FFFFFF;text-decoration:none;
-                  padding:13px 26px;border-radius:8px;font-size:15px;font-weight:500;">
+                  padding:13px 26px;border-radius:8px;font-size:15px;font-weight:500;
+                  white-space:nowrap;">
           Abrir a agenda e confirmar
         </a>
       </td></tr>`
     : ''
 
   const botaoWhats = waNumber
-    ? `<tr><td style="padding-top:12px;">
+    ? `<tr><td colspan="2" style="padding-top:12px;">
         <a href="https://wa.me/${waNumber}?text=${waText}"
            style="display:inline-block;color:${AZUL};text-decoration:underline;font-size:14px;">
           Falar com ${esc(primeiroNome || 'a paciente')} no WhatsApp
