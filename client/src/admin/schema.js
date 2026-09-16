@@ -260,7 +260,7 @@ export const SCHEMA = {
 
   footer: {
     label: 'Rodape',
-    hint: 'O bloco legal (nome, CRO, responsavel tecnico) e obrigatorio por lei. Preencha, nao apague.',
+    hint: 'Os dados do CFO ficam guardados aqui, mas nao aparecem mais no rodape.',
     fields: [
       { key: 'logoText', label: 'Nome no rodape', type: 'text' },
       { key: 'tagline', label: 'Linha de apoio', type: 'text' },
@@ -293,7 +293,7 @@ export const SCHEMA = {
         ],
       },
       {
-        key: 'legal', label: 'Dados obrigatorios (CFO)', type: 'group',
+        key: 'legal', label: 'Dados do CFO (guardados, fora do rodape)', type: 'group',
         fields: [
           { key: 'profissional', label: 'Nome completo', type: 'text' },
           { key: 'denominacao', label: 'Denominacao profissional', type: 'text' },

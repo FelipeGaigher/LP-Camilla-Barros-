@@ -14,21 +14,23 @@ export default function Sintomas() {
   return (
     <section id="sintomas" className="section">
       <div className="container">
-        <Reveal className="section-head">
-          <EditableText path="sintomas.eyebrow" className="eyebrow" />
-          <EditableText as="h2" path="sintomas.title" />
-          <EditableText as="p" path="sintomas.intro" className="lead" multiline />
-        </Reveal>
+        <div className="sintomas__layout">
+          <Reveal className="section-head">
+            <EditableText path="sintomas.eyebrow" className="eyebrow" />
+            <EditableText as="h2" path="sintomas.title" />
+            <EditableText as="p" path="sintomas.intro" className="lead" multiline />
+          </Reveal>
 
-        <RevealGroup className="sintomas__grid" stagger={0.06}>
-          {s.items?.map((item, i) => (
-            <RevealItem className="sintoma" key={i} y={18}>
-              <span className="sintoma__index">{String(i + 1).padStart(2, '0')}</span>
-              <EditableText as="h3" path={`sintomas.items.${i}.title`} />
-              <EditableText as="p" path={`sintomas.items.${i}.text`} multiline />
-            </RevealItem>
-          ))}
-        </RevealGroup>
+          <RevealGroup className="sintomas__grid" stagger={0.06}>
+            {s.items?.map((item, i) => (
+              <RevealItem className="sintoma" key={i} y={18}>
+                <span className="sintoma__index">{String(i + 1).padStart(2, '0')}</span>
+                <EditableText as="h3" path={`sintomas.items.${i}.title`} />
+                <EditableText as="p" path={`sintomas.items.${i}.text`} multiline />
+              </RevealItem>
+            ))}
+          </RevealGroup>
+        </div>
 
         <Reveal className="sintomas__foot">
           <p className="muted" style={{ fontSize: 'var(--fs-small)', maxWidth: '46ch' }}>

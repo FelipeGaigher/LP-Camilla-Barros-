@@ -299,7 +299,10 @@ export const defaults = {
       whatsapp: '',
       facebook: '',
     },
-    // OBRIGATORIO por lei (Art. 43, Resolucao CFO 118/2012). Nao remover.
+    // Saiu do rodape a pedido da Camilla: o nome dela ja aparece na assinatura
+    // e no copyright. Os dados ficam aqui porque o Art. 43 da Resolucao CFO
+    // 118/2012 pede nome, CRO e responsavel tecnico na publicidade — se voltar,
+    // e so remontar o bloco com estes campos.
     legal: {
       profissional: 'Dra. Camilla Barros',
       denominacao: 'Cirurgia-Dentista',

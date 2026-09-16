@@ -21,10 +21,11 @@ export default function Footer() {
       <div className="container">
         <div className="footer__top">
           <div>
-            {/* No rodape cabe o lockup completo, invertido sobre a faixa escura. */}
+            {/* So a assinatura: o monograma ja aparece no menu e no favicon.
+                A versao branca dispensa o invert sobre a faixa escura. */}
             <img
               className="footer__mark"
-              src="/marca/logo-lockup.png"
+              src="/marca/branco/wordmark.png"
               alt={`${f.legal.profissional}, ${f.tagline}`}
             />
             <p className="footer__tagline">{f.tagline}</p>
@@ -91,18 +92,6 @@ export default function Footer() {
               ))}
             </ul>
           </div>
-        </div>
-
-        {/* Bloco obrigatorio: Art. 43 da Resolucao CFO 118/2012. Nao remover. */}
-        <div className="footer__legal">
-          <p className="footer__legal-line">
-            <strong>{f.legal.profissional}</strong> &middot; {f.legal.denominacao} &middot; {f.legal.cro}
-          </p>
-          <p className="footer__legal-line">
-            Responsavel Tecnico: {f.legal.responsavelTecnico}
-            {f.legal.cnpj ? ` · CNPJ ${f.legal.cnpj}` : ''}
-          </p>
-          <p className="footer__aviso">{f.legal.aviso}</p>
         </div>
 
         <div className="footer__bottom">

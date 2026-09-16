@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef } from 'react'
 import { motion, useScroll, useTransform, useReducedMotion } from 'motion/react'
 import { useSiteData } from '../context/SiteDataContext'
 import Reveal from './Reveal'
@@ -10,18 +10,31 @@ import EditableText from './editable/EditableText'
  *
  * Como funciona: cada card e `position: sticky` com um `top` deslocado pelo
  * indice, entao eles param um por cima do outro. Enquanto o proximo sobe,
- * o card de baixo encolhe (scale) e some um pouco, criando a pilha.
+ * o card de baixo encolhe, criando a pilha.
  * Nada de pinning por JS: o browser resolve o sticky sozinho.
+ *
+ * Roda em qualquer largura. O que muda no celular e so a proporcao do card
+ * e o quanto de cada um fica espiando, e isso e tudo media query.
  */
 export default function Tratamentos() {
   const { data } = useSiteData()
   const t = data.tratamentos
-  const containerRef = useRef(null)
+  const stackRef = useRef(null)
+
+  // O progresso da saida e medido aqui, na pilha inteira, e nao card a card.
+  // Motivo: o card e `position: sticky`, e um elemento grudado devolve sempre
+  // o mesmo getBoundingClientRect. Medindo nele, o useScroll congela e a
+  // escala nunca sai de 1 — o empilhamento aparecia, o encolher nao.
+  // `.stack` nao gruda, entao o progresso dela anda de verdade.
+  const { scrollYProgress } = useScroll({
+    target: stackRef,
+    offset: ['start start', 'end start'],
+  })
 
   if (!t.items?.length) return null
 
   return (
-    <section id="tratamentos" className="section section--surface" ref={containerRef}>
+    <section id="tratamentos" className="section section--surface">
       <div className="container">
         <Reveal className="section-head">
           <EditableText path="tratamentos.eyebrow" className="eyebrow" />
@@ -31,9 +44,15 @@ export default function Tratamentos() {
       </div>
 
       <div className="container">
-        <div className="stack">
+        <div className="stack" ref={stackRef}>
           {t.items.map((item, i) => (
-            <StackCard key={i} item={item} index={i} total={t.items.length} />
+            <StackCard
+              key={i}
+              item={item}
+              index={i}
+              total={t.items.length}
+              progress={scrollYProgress}
+            />
           ))}
         </div>
       </div>
@@ -41,28 +60,13 @@ export default function Tratamentos() {
   )
 }
 
-/** No celular a pilha vira uma lista simples: empilhar em tela pequena
- *  esconde conteudo em vez de organizar. */
-function useIsNarrow(query = '(max-width: 1024px)') {
-  const [narrow, setNarrow] = useState(() =>
-    typeof window !== 'undefined' ? window.matchMedia(query).matches : false
-  )
-  useEffect(() => {
-    const mq = window.matchMedia(query)
-    const onChange = (e) => setNarrow(e.matches)
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
-  }, [query])
-  return narrow
-}
-
-function StackCard({ item, index, total }) {
+function StackCard({ item, index, total, progress }) {
   const ref = useRef(null)
   const reduce = useReducedMotion()
-  const narrow = useIsNarrow()
 
   // Entrada: enquanto o card sobe da base ate encostar no topo, a foto
-  // interna faz um zoom-out suave.
+  // interna faz um zoom-out suave. Aqui medir no proprio card funciona,
+  // porque nesse trecho ele ainda nao grudou.
   const { scrollYProgress: enterProgress } = useScroll({
     target: ref,
     offset: ['start end', 'start start'],
@@ -70,24 +74,23 @@ function StackCard({ item, index, total }) {
   const imageScale = useTransform(enterProgress, [0, 1], [1.18, 1])
 
   // Saida: com o card ja grudado no topo, o proximo sobe por cima e este
-  // encolhe. Quanto mais antigo o card, menor ele fica no fim da pilha.
+  // encolhe. Cada card ocupa uma fatia igual do progresso da pilha, e a
+  // fatia dele e justamente o trecho em que o card seguinte o cobre.
+  // So escala, sem fade: os cards param colados um sobre o outro, entao
+  // qualquer transparencia faz o texto do card de tras vazar pelo da frente.
   const targetScale = 1 - (total - index) * 0.028
-  const { scrollYProgress: exitProgress } = useScroll({
-    target: ref,
-    offset: ['start start', 'end start'],
-  })
-  const exitScale = useTransform(exitProgress, [0, 1], [1, targetScale])
-  const exitOpacity = useTransform(exitProgress, [0, 0.85, 1], [1, 1, 0.72])
+  const inicio = index / total
+  const fim = (index + 1) / total
+  const exitScale = useTransform(progress, [inicio, fim], [1, targetScale])
 
-  const stacked = !reduce && !narrow
-  const style = stacked ? { scale: exitScale, opacity: exitOpacity } : undefined
+  // A pilha roda em toda largura; quem desliga e so o prefers-reduced-motion.
+  // O `top` de cada card mora no CSS, via --i: o desconto por card muda de
+  // 22px no desktop para 9px no celular, e isso e decisao de media query.
+  const stacked = !reduce
+  const style = stacked ? { scale: exitScale } : undefined
 
   return (
-    <div
-      className="stack__item"
-      ref={ref}
-      style={stacked ? { top: `calc(5.5rem + ${index * 22}px)` } : undefined}
-    >
+    <div className="stack__item" ref={ref} style={{ '--i': String(index) }}>
       <motion.article className="stack__card" style={style}>
         <div className="stack__body">
           <span className="stack__number">{item.number || String(index + 1).padStart(2, '0')}</span>
