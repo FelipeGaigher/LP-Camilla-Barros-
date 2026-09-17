@@ -23,7 +23,7 @@ export default function VideoSection() {
 
         <Reveal delay={0.1}>
           <div className="videosec__player">
-            {!v.videoUrl && <div className="placeholder-box">Video de apresentacao da Camilla</div>}
+            {!v.videoUrl && <div className="placeholder-box">Vídeo de apresentação da Camilla</div>}
 
             {isFile && (
               <video
@@ -49,7 +49,7 @@ export default function VideoSection() {
             {embed && !playing && v.poster && <img src={v.poster} alt={v.title} />}
 
             {v.videoUrl && !playing && (
-              <button className="videosec__play" onClick={() => setPlaying(true)} aria-label="Reproduzir video">
+              <button className="videosec__play" onClick={() => setPlaying(true)} aria-label="Reproduzir vídeo">
                 <span>
                   <svg width="20" height="22" viewBox="0 0 20 22" fill="var(--accent)" aria-hidden="true">
                     <path d="M19 9.27a2 2 0 0 1 0 3.46L3 21.99a2 2 0 0 1-3-1.73V1.74A2 2 0 0 1 3 .01l16 9.26z" />

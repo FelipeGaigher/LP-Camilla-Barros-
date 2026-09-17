@@ -3,32 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { podeAnimar } from '../lib/motionEnv'
 import { useSiteData } from '../context/SiteDataContext'
 import { irPara } from '../lib/navegacao'
-import { WhatsAppIcon } from './Chrome'
+import { WhatsAppIcon, waLink } from './Chrome'
+import { destinoExiste, destinoCta } from '../lib/secoes'
 import { useEditMode } from '../context/EditModeContext'
 import EditableText from './editable/EditableText'
 import EditableImage from './editable/EditableImage'
+import Icone from './Icone'
 
 const EASE = [0.33, 1, 0.68, 1]
-
-/** Ícones dos selos que flutuam sobre o retrato. */
-const ICONS = {
-  check: <path d="M20 6 9 17l-5-5" />,
-  relogio: (
-    <>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 2" />
-    </>
-  ),
-  escudo: <path d="M12 3 4 6v6c0 4.4 3.2 8.5 8 9.6 4.8-1.1 8-5.2 8-9.6V6l-8-3z" />,
-}
-
-function ChipIcon({ name }) {
-  return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-      {ICONS[name] || ICONS.check}
-    </svg>
-  )
-}
 
 export default function Hero() {
   const { data } = useSiteData()
@@ -38,6 +20,12 @@ export default function Hero() {
   // Sem navegador (prerender de build) o tratamento e o mesmo de quem pediu
   // menos movimento: renderiza ja no estado final, sem passar por opacity: 0.
   const reduce = useReducedMotion() || !podeAnimar
+  // Com a secao Contato desligada o CTA cairia num link morto. Ver lib/secoes.js.
+  const ctaPrimario = destinoCta(
+    hero.ctaPrimary.href,
+    data.visibility,
+    waLink(data.contato?.whatsapp?.number, data.contato?.whatsapp?.message),
+  )
   const { isEditing } = useEditMode()
 
   // irPara resolve ancora, rota e link externo. Sem ele, um href de rota faria
@@ -95,11 +83,13 @@ export default function Hero() {
           <motion.div className="btn-row hero__ctas" {...anim(0.82)}>
             {/* O icone so aparece quando o botao leva mesmo pro WhatsApp. Num
                 CTA que rola pro formulario ele mentiria sobre o destino. */}
-            <a className="btn btn--primary" href={hero.ctaPrimary.href} onClick={(e) => go(e, hero.ctaPrimary.href)}>
-              {hero.ctaPrimary.href?.includes('wa.me') && <WhatsAppIcon size={17} />}
+            <a className="btn btn--primary" href={ctaPrimario} onClick={(e) => go(e, ctaPrimario)}>
+              {ctaPrimario?.includes('wa.me') && <WhatsAppIcon size={17} />}
               <EditableText path="hero.ctaPrimary.label" />
             </a>
-            {hero.ctaSecondary?.label && (
+            {/* O secundario so leva a outra secao da propria pagina. Com ela
+                desligada nao ha fallback que faca sentido: o botao sai. */}
+            {hero.ctaSecondary?.label && destinoExiste(hero.ctaSecondary.href, data.visibility) && (
               <a className="btn btn--ghost" href={hero.ctaSecondary.href} onClick={(e) => go(e, hero.ctaSecondary.href)}>
                 <EditableText path="hero.ctaSecondary.label" />
               </a>
@@ -139,7 +129,7 @@ export default function Hero() {
 
           {hero.chips?.map((chip, i) => (
             <span className="hero__chip" key={i}>
-              <ChipIcon name={chip.icon} />
+              <Icone name={chip.icon} />
               <EditableText path={`hero.chips.${i}.label`} />
             </span>
           ))}

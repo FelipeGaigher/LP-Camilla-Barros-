@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { brtParts } from '../lib/brt'
 import { waLink, WhatsAppIcon, InstagramIcon } from './Chrome'
 import { irPara } from '../lib/navegacao'
+import { linksVisiveis, destinoExiste } from '../lib/secoes'
 
 export default function Footer() {
   const { data } = useSiteData()
@@ -10,6 +11,10 @@ export default function Footer() {
   const f = data.footer
   const nav = data.nav
   const c = data.contato
+  // Mesmo filtro da navbar: secao desligada nao deixa link morto aqui. O
+  // "Contato" e escrito a mao no JSX, entao e checado separado.
+  const links = linksVisiveis(nav.links, data.visibility)
+  const temContato = destinoExiste('#contato', data.visibility)
   // Ano de Brasilia: nas ultimas tres horas de 31/12 o UTC ja virou o ano.
   const year = brtParts(new Date()).ano
   const wa = f.social.whatsapp || waLink(c.whatsapp.number, c.whatsapp.message)
@@ -46,21 +51,23 @@ export default function Footer() {
           <div>
             <h4>Navegar</h4>
             <ul>
-              {nav.links.map((l) => (
+              {links.map((l) => (
                 <li key={l.href}>
                   <a href={l.href} onClick={(e) => go(e, l.href)}>
                     {l.label}
                   </a>
                 </li>
               ))}
-              <li>
-                <a href="#contato" onClick={(e) => go(e, '#contato')}>Contato</a>
-              </li>
+              {temContato && (
+                <li>
+                  <a href="#contato" onClick={(e) => go(e, '#contato')}>Contato</a>
+                </li>
+              )}
             </ul>
           </div>
 
           <div>
-            <h4>Endereco</h4>
+            <h4>Endereço</h4>
             <ul>
               <li>
                 {f.endereco.street}

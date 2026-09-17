@@ -2,11 +2,20 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSiteData } from '../context/SiteDataContext'
 import { irPara } from '../lib/navegacao'
+import { linksVisiveis, destinoCta } from '../lib/secoes'
+import { waLink } from './Chrome'
 
 export default function Navbar() {
   const { data } = useSiteData()
   const navigate = useNavigate()
   const nav = data.nav
+  // Secao desligada no painel tira o link daqui junto. Ver lib/secoes.js.
+  const links = linksVisiveis(nav.links, data.visibility)
+  const ctaHref = destinoCta(
+    nav.cta.href,
+    data.visibility,
+    waLink(data.contato?.whatsapp?.number, data.contato?.whatsapp?.message),
+  )
   const [scrolled, setScrolled] = useState(false)
   const [hidden, setHidden] = useState(false)
   const [open, setOpen] = useState(false)
@@ -45,13 +54,13 @@ export default function Navbar() {
           <img src={nav.logoImage || '/marca/logo-monograma.png'} alt={nav.logoText} />
         </a>
 
-        <nav className="nav__links" aria-label="Navegacao principal">
-          {nav.links.map((l) => (
+        <nav className="nav__links" aria-label="Navegação principal">
+          {links.map((l) => (
             <a key={l.href} className="nav__link" href={l.href} onClick={(e) => go(e, l.href)}>
               {l.label}
             </a>
           ))}
-          <a className="btn btn--primary" href={nav.cta.href} onClick={(e) => go(e, nav.cta.href)}>
+          <a className="btn btn--primary" href={ctaHref} onClick={(e) => go(e, ctaHref)}>
             {nav.cta.label}
           </a>
         </nav>
@@ -67,12 +76,12 @@ export default function Navbar() {
       </div>
 
       <div className={`nav__drawer ${open ? 'is-open' : ''}`}>
-        {nav.links.map((l) => (
+        {links.map((l) => (
           <a key={l.href} href={l.href} onClick={(e) => go(e, l.href)}>
             {l.label}
           </a>
         ))}
-        <a className="btn btn--primary" href={nav.cta.href} onClick={(e) => go(e, nav.cta.href)}>
+        <a className="btn btn--primary" href={ctaHref} onClick={(e) => go(e, ctaHref)}>
           {nav.cta.label}
         </a>
       </div>

@@ -77,6 +77,13 @@ export const SCHEMA = {
         item: [
           { key: 'title', label: 'Titulo', type: 'text' },
           { key: 'text', label: 'Texto', type: 'textarea' },
+          // Os mesmos tres do hero, de proposito: o selo sobre a foto e o pilar
+          // logo abaixo mostram o mesmo desenho.
+          { key: 'icon', label: 'Icone', type: 'select', options: [
+            { value: 'check', label: 'Confere' },
+            { value: 'escudo', label: 'Escudo' },
+            { value: 'relogio', label: 'Relogio' },
+          ] },
         ],
       },
     ],
@@ -126,6 +133,14 @@ export const SCHEMA = {
         item: [
           { key: 'title', label: 'Sinal', type: 'text' },
           { key: 'text', label: 'Explicacao', type: 'textarea' },
+          { key: 'icon', label: 'Icone', type: 'select', options: [
+            { value: 'dente', label: 'Dente' },
+            { value: 'gota', label: 'Gota (sangramento)' },
+            { value: 'sorriso', label: 'Sorriso' },
+            { value: 'denteLascado', label: 'Dente lascado' },
+            { value: 'lua', label: 'Lua (sono)' },
+            { value: 'floco', label: 'Floco (sensibilidade)' },
+          ] },
         ],
       },
     ],

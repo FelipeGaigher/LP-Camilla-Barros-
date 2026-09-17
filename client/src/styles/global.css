@@ -470,9 +470,29 @@ h3 { font-size: var(--fs-h3); letter-spacing: -0.01em; line-height: 1.15; }
 .hero__chip:nth-of-type(1) { top: 14%; left: -2%; }
 .hero__chip:nth-of-type(2) { top: 34%; right: -1%; }
 .hero__chip:nth-of-type(3) { top: 58%; left: -5%; }
+/* No celular o retrato fica estreito e o rosto ocupa a faixa central, entre
+   ~25% e ~50% da altura do palco. O selo do meio caia bem em cima dele e
+   tampava justamente o que a foto tem de melhor.
+
+   Aqui os tres encolhem, ganham teto de largura e saem da altura do rosto: um
+   acima da testa, dois abaixo do queixo. `nowrap` porque selo de duas linhas
+   ocupa mais area do que o que ele economiza em largura. */
 @media (max-width: 640px) {
-  .hero__chip:nth-of-type(1), .hero__chip:nth-of-type(3) { left: 0; }
-  .hero__chip:nth-of-type(2) { right: 0; }
+  .hero__chip {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.7rem;
+    gap: 0.35rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .hero__chip svg { width: 12px; height: 12px; }
+  /* O de cima fica sozinho, acima da testa, e pode ser o mais largo.
+     Os outros dois dividem a faixa livre entre o queixo e o cartao do nome,
+     um de cada lado — empilhados nao caberiam sem invadir um dos dois. */
+  .hero__chip:nth-of-type(1) { top: 3%; left: 0; max-width: 72%; }
+  .hero__chip:nth-of-type(2) { top: 53%; right: 0; max-width: 47%; }
+  .hero__chip:nth-of-type(3) { top: 53%; left: 0; max-width: 47%; }
 }
 
 .hero__card {
@@ -505,6 +525,10 @@ h3 { font-size: var(--fs-h3); letter-spacing: -0.01em; line-height: 1.15; }
    .cred__name e .cred__meta. O padding-top que sobrou aqui era o respiro
    depois daquele bloco — sem ele, os valores encostavam no hero. */
 .cred__values { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.5rem; }
+/* Mesmo desenho dos selos do hero, logo acima, na mesma ordem. Sem caixa nem
+   circulo atras: o icone solto no azul da marca segue a regra da pagina de que
+   o azul so aparece no que e clicavel ou no que ancora a leitura. */
+.cred__icone { display: block; color: var(--accent); margin-bottom: 1rem; }
 .cred__value h3 { font-family: var(--font-body); font-size: 1rem; font-weight: 600; letter-spacing: 0; margin-bottom: 0.5rem; }
 .cred__value p { font-size: var(--fs-small); color: var(--muted); }
 @media (max-width: 800px) { .cred__values { grid-template-columns: 1fr; gap: 1.75rem; } }
@@ -719,8 +743,11 @@ h3 { font-size: var(--fs-h3); letter-spacing: -0.01em; line-height: 1.15; }
   transition: background var(--dur) var(--ease-out-quart);
 }
 .sintoma:hover { background: var(--white); }
+/* O numero sozinho so contava a posicao. Com o icone ao lado, a linha de cima
+   passa a dizer de que sinal se trata antes da pessoa ler o titulo. */
+.sintoma__topo { display: flex; align-items: center; gap: 0.625rem; color: var(--accent); }
 .sintoma__index { font-family: var(--font-display); font-size: 0.9375rem; color: var(--accent); }
-.sintoma h3 { font-family: var(--font-body); font-size: 1.0625rem; font-weight: 600; letter-spacing: 0; margin: 1.25rem 0 0.625rem; line-height: 1.35; }
+.sintoma h3 { font-family: var(--font-body); font-size: 1.0625rem; font-weight: 600; letter-spacing: 0; margin: 1rem 0 0.625rem; line-height: 1.35; }
 .sintoma p { font-size: var(--fs-small); color: var(--muted); }
 @media (max-width: 1080px) {
   .sintomas__layout { grid-template-columns: 1fr; gap: clamp(2.5rem, 5vw, 4rem); }
@@ -729,7 +756,21 @@ h3 { font-size: var(--fs-h3); letter-spacing: -0.01em; line-height: 1.15; }
 }
 @media (max-width: 620px) { .sintomas__grid { grid-template-columns: 1fr; } }
 
-.sintomas__foot { margin-top: 3rem; display: flex; flex-wrap: wrap; align-items: center; gap: 1.25rem; }
+/* O texto de ressalva empurra o botao para a direita, mas nunca disputa espaco
+   com ele: o botao tem largura propria e o paragrafo fica com o resto. */
+.sintomas__foot {
+  margin-top: 3rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem 2rem;
+}
+.sintomas__cta { flex: none; }
+@media (max-width: 560px) {
+  .sintomas__foot { justify-content: flex-start; }
+  .sintomas__cta { width: 100%; }
+}
 
 /* ==========================================================================
    Sobre
@@ -881,6 +922,67 @@ h3 { font-size: var(--fs-h3); letter-spacing: -0.01em; line-height: 1.15; }
 }
 .field textarea { min-height: 8rem; resize: vertical; }
 .field--hp { position: absolute; left: -9999px; opacity: 0; }
+
+/* ---- Select do design system ----
+   Substitui o <select> nativo, cuja lista de opcoes e desenhada pelo sistema
+   operacional e nao aceita estilo: no Windows vinha com a barra de selecao azul
+   e a fonte do sistema, no meio de um formulario em Montserrat. O campo abaixo
+   reusa os mesmos tokens de .field input, entao os quatro campos do formulario
+   ficam identicos em altura, borda e foco. Ver Select.jsx. */
+.select { position: relative; }
+.select__campo {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9375rem 1.125rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-small);
+  text-align: left;
+  color: var(--ink);
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.select__campo:focus-visible {
+  outline: none;
+  border-color: var(--accent-soft);
+  box-shadow: 0 0 0 3px var(--accent-tint);
+}
+.select__campo[aria-expanded='true'] { border-color: var(--accent-soft); box-shadow: 0 0 0 3px var(--accent-tint); }
+/* Sem escolha, o rotulo e um placeholder e nao pode ter o peso de um valor. */
+.select__campo--vazio .select__valor { color: var(--muted-light); }
+.select__valor { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.select__seta { flex: none; color: var(--muted); transition: transform var(--dur-fast) var(--ease-out-quart); }
+.select__campo[aria-expanded='true'] .select__seta { transform: rotate(180deg); }
+
+.select__lista {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.375rem);
+  left: 0;
+  right: 0;
+  max-height: 16rem;
+  overflow-y: auto;
+  padding: 0.375rem;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 24px 60px -30px rgba(17, 17, 17, 0.45);
+}
+.select__opcao {
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-small);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+/* `is-ativa` e o item sob o cursor ou sob a seta do teclado. Fundo azul de 10%
+   em vez do azul chapado do nativo: e realce de leitura, nao de selecao. */
+.select__opcao.is-ativa { background: var(--accent-tint); color: var(--ink); }
+.select__opcao.is-escolhida { font-weight: 500; color: var(--accent-ink); }
+.select__opcao--vazia { color: var(--muted); }
 /* ---- Escolher horario dentro do formulario ----
    Usa os mesmos tokens do resto do site. Fica recolhido ate a pessoa pedir:
    quem so quer mandar uma pergunta nao precisa encarar um calendario. */

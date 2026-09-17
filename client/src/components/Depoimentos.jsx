@@ -36,10 +36,10 @@ export default function Depoimentos() {
         </RevealGroup>
 
         <Reveal className="depo__foot">
-          <span>Relatos publicados com autorizacao dos pacientes.</span>
+          <span>Relatos publicados com autorização dos pacientes.</span>
           {d.googleUrl && (
             <a className="arrow-link" style={{ color: 'inherit' }} href={d.googleUrl} target="_blank" rel="noopener noreferrer">
-              Ver avaliacoes no Google
+              Ver avaliações no Google
             </a>
           )}
         </Reveal>

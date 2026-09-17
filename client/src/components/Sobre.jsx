@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Reveal from './Reveal'
 import { irPara } from '../lib/navegacao'
 import EditableText from './editable/EditableText'
+import { destinoExiste } from '../lib/secoes'
 import EditableImage from './editable/EditableImage'
 
 export default function Sobre() {
@@ -44,7 +45,7 @@ export default function Sobre() {
             </Reveal>
           )}
 
-          {s.cta?.label && (
+          {s.cta?.label && destinoExiste(s.cta.href, data.visibility) && (
             <Reveal className="sobre__cta" delay={0.18}>
               <a className="btn btn--primary" href={s.cta.href} onClick={(e) => go(e, s.cta.href)}>
                 {s.cta.label}

@@ -28,7 +28,7 @@ export function LoadingScreen({ enabled = true, label = 'Dra. Camilla' }) {
 export function waLink(number, message) {
   const digits = String(number || '').replace(/\D/g, '')
   if (!digits) return ''
-  const text = encodeURIComponent(message || 'Ola! Vim pelo site.')
+  const text = encodeURIComponent(message || 'Olá! Vim pelo site.')
   return `https://wa.me/${digits}?text=${text}`
 }
 

@@ -6,10 +6,10 @@ export default function NotFound() {
       <div>
         <h1 className="display">404</h1>
         <p className="lead" style={{ margin: '1rem auto 2rem' }}>
-          Essa pagina nao existe ou foi movida.
+          Essa página não existe ou foi movida.
         </p>
         <Link className="btn btn--primary" to="/">
-          Voltar para o inicio
+          Voltar para o início
         </Link>
       </div>
     </main>

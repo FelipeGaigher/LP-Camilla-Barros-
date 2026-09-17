@@ -4,7 +4,7 @@ import { useEditMode } from '../../context/EditModeContext'
 
 const ROTULO = {
   idle: 'Tudo salvo',
-  dirty: 'Alteracoes nao salvas',
+  dirty: 'Alterações não salvas',
   saving: 'Salvando...',
   saved: 'Salvo',
   error: 'Erro ao salvar',

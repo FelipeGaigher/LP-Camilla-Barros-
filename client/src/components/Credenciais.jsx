@@ -1,6 +1,11 @@
 import { useSiteData } from '../context/SiteDataContext'
 import { RevealGroup, RevealItem } from './Reveal'
 import EditableText from './editable/EditableText'
+import Icone from './Icone'
+
+/** Mesmos desenhos dos selos do hero, na mesma ordem. Fallback quando a
+ *  Camilla adiciona um valor pelo painel e nao escolhe icone. */
+const PADRAO = ['check', 'escudo', 'relogio']
 
 /**
  * Faixa logo abaixo do hero com os tres valores da clinica.
@@ -27,6 +32,9 @@ export default function Credenciais() {
         <RevealGroup className="cred__values">
           {c.valores?.map((v, i) => (
             <RevealItem className="cred__value" key={i}>
+              <span className="cred__icone">
+                <Icone name={v.icon || PADRAO[i % PADRAO.length]} size={22} />
+              </span>
               <EditableText as="h3" path={`credenciais.valores.${i}.title`} />
               <EditableText as="p" path={`credenciais.valores.${i}.text`} multiline />
             </RevealItem>

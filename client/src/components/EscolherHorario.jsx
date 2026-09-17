@@ -60,7 +60,7 @@ export default function EscolherHorario({ textos, valor, onEscolher, conflito = 
     return (
       <div className="field">
         <button type="button" className="hor__abrir" onClick={() => setAberto(true)}>
-          {textos.verMais || 'Ver horarios'}
+          {textos.verMais || 'Ver horários'}
         </button>
         <p className="hor__apoio">{textos.texto}</p>
       </div>
@@ -102,7 +102,7 @@ export default function EscolherHorario({ textos, valor, onEscolher, conflito = 
         })}
       </div>
 
-      {dia && carregando && <p className="hor__apoio">Carregando horarios...</p>}
+      {dia && carregando && <p className="hor__apoio">Carregando horários...</p>}
 
       {dia && !carregando && slots.length === 0 && (
         <p className="hor__apoio">{textos.semHorario}</p>
@@ -111,7 +111,7 @@ export default function EscolherHorario({ textos, valor, onEscolher, conflito = 
       {dia && !carregando && slots.length > 0 && (
         // Horario ocupado nao aparece desabilitado: leitor de tela pula, e no
         // visual vira falsa esperanca. So o que esta livre e renderizado.
-        <div className="hor__horas" role="radiogroup" aria-label="Escolha o horario">
+        <div className="hor__horas" role="radiogroup" aria-label="Escolha o horário">
           {slots.map((s) => (
             <label className="hor__hora" key={s.inicio}>
               <input

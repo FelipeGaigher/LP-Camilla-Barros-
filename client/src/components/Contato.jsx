@@ -6,6 +6,7 @@ import Reveal from './Reveal'
 import { waLink, WhatsAppIcon } from './Chrome'
 import EditableText from './editable/EditableText'
 import EscolherHorario from './EscolherHorario'
+import Select from './Select'
 
 const VAZIO = { name: '', phone: '', email: '', interest: '', message: '', website: '' }
 
@@ -41,7 +42,7 @@ export default function Contato() {
       setStatus({ state: 'ok', text: c.successMessage })
       setForm(VAZIO)
     } else {
-      setStatus({ state: 'error', text: res?.error || 'Nao foi possivel enviar. Tente pelo WhatsApp.' })
+      setStatus({ state: 'error', text: res?.error || 'Não foi possível enviar. Tente pelo WhatsApp.' })
     }
   }
 
@@ -49,7 +50,7 @@ export default function Contato() {
     // O endpoint de agendamento exige WhatsApp: e por ele que a confirmacao
     // volta. O de contato aceita so e-mail, dai a checagem extra aqui.
     if (!form.phone.trim()) {
-      setStatus({ state: 'error', text: 'Para marcar horario, informe o WhatsApp — e por ele que a confirmacao chega.' })
+      setStatus({ state: 'error', text: 'Para marcar horário, informe o WhatsApp. É por ele que a confirmação chega.' })
       return
     }
 
@@ -77,12 +78,12 @@ export default function Contato() {
     if (res.code === 'HORARIO_OCUPADO' || res.code === 'HORARIO_INVALIDO') {
       setHorario(null)
       setConflito((n) => n + 1)
-      setStatus({ state: 'error', text: 'Esse horario acabou de ser pedido por outra pessoa. Escolha outro.' })
+      setStatus({ state: 'error', text: 'Esse horário acabou de ser pedido por outra pessoa. Escolha outro.' })
       return
     }
 
     if (res.code === 'REDE') {
-      setStatus({ state: 'error', text: 'Sem conexao. Tente de novo ou fale pelo WhatsApp.' })
+      setStatus({ state: 'error', text: 'Sem conexão. Tente de novo ou fale pelo WhatsApp.' })
       return
     }
     setStatus({ state: 'error', text: res.error })
@@ -106,7 +107,7 @@ export default function Contato() {
 
           <Reveal className="contato__aside" delay={0.1} style={{ marginTop: '3rem' }}>
             <div className="contato__block">
-              <h3>Endereco</h3>
+              <h3>Endereço</h3>
               <p>
                 {f.endereco.street}
                 {f.endereco.complement ? `, ${f.endereco.complement}` : ''}
@@ -118,7 +119,7 @@ export default function Contato() {
             </div>
 
             <div className="contato__block">
-              <h3>Horarios</h3>
+              <h3>Horários</h3>
               <ul>
                 {f.horarios?.map((h, i) => (
                   <li key={i}>
@@ -130,7 +131,7 @@ export default function Contato() {
 
             {f.endereco.mapsEmbed && (
               <div className="contato__map">
-                <iframe src={f.endereco.mapsEmbed} title="Mapa do consultorio" loading="lazy" allowFullScreen />
+                <iframe src={f.endereco.mapsEmbed} title="Mapa do consultório" loading="lazy" allowFullScreen />
               </div>
             )}
           </Reveal>
@@ -155,16 +156,18 @@ export default function Contato() {
                 <input id="f-email" type="email" value={form.email} onChange={set('email')} autoComplete="email" />
               </div>
 
+              {/* O <select> nativo desenha a lista de opcoes pelo sistema
+                  operacional, com a cor de selecao do Windows. Era o unico
+                  elemento do formulario fora da identidade. Ver Select.jsx. */}
               <div className="field">
-                <label htmlFor="f-interest">Sobre o que voce quer falar</label>
-                <select id="f-interest" value={form.interest} onChange={set('interest')}>
-                  <option value="">Selecione</option>
-                  {c.interesses?.map((op, i) => (
-                    <option key={i} value={op}>
-                      {op}
-                    </option>
-                  ))}
-                </select>
+                <label id="f-interest-label" htmlFor="f-interest">Sobre o que você quer falar</label>
+                <Select
+                  id="f-interest"
+                  labelId="f-interest-label"
+                  value={form.interest}
+                  onChange={(v) => setForm((prev) => ({ ...prev, interest: v }))}
+                  options={c.interesses || []}
+                />
               </div>
 
               <div className="field">
@@ -184,7 +187,7 @@ export default function Contato() {
 
               {/* honeypot anti-bot, invisivel para pessoas */}
               <div className="field field--hp" aria-hidden="true">
-                <label htmlFor="f-website">Nao preencha</label>
+                <label htmlFor="f-website">Não preencha</label>
                 <input id="f-website" tabIndex={-1} autoComplete="off" value={form.website} onChange={set('website')} />
               </div>
 
@@ -192,7 +195,7 @@ export default function Contato() {
                 {status.state === 'sending'
                   ? 'Enviando...'
                   : horario
-                    ? 'Pedir este horario'
+                    ? 'Pedir este horário'
                     : 'Enviar mensagem'}
               </button>
 
@@ -203,7 +206,7 @@ export default function Contato() {
               )}
 
               <p className="form__legal">
-                Ao enviar, voce concorda que seus dados sejam usados apenas para retorno sobre este contato.
+                Ao enviar, você concorda que seus dados sejam usados apenas para retorno sobre este contato.
               </p>
             </form>
           </Reveal>
