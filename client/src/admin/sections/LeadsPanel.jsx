@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { fetchLeads, deleteLead } from '../../data/api'
 import { brtDataHora, brtDateKey } from '../../lib/brt'
+import { normalizaTelefone, linkWhatsApp } from '../../lib/telefone'
 
 // Antes formatava no fuso do navegador, que acerta em Vitoria por acidente e
 // erra em qualquer outro lugar. O helper fixa Brasilia.
@@ -75,9 +76,16 @@ export default function LeadsPanel() {
                 {l.phone && (
                   <li>
                     <span>WhatsApp</span>
-                    <a href={`https://wa.me/${String(l.phone).replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
-                      {l.phone}
-                    </a>
+                    {/* O campo e livre no site: "nao tenho" e "27 9999" chegam
+                        aqui. Sem numero utilizavel o valor vira texto, nunca um
+                        link vazio — href="" recarrega o painel e parece bug. */}
+                    {linkWhatsApp(normalizaTelefone(l.phone))
+                      ? (
+                        <a href={linkWhatsApp(normalizaTelefone(l.phone))} target="_blank" rel="noopener noreferrer">
+                          {l.phone}
+                        </a>
+                      )
+                      : <span>{l.phone}</span>}
                   </li>
                 )}
                 {l.email && <li><span>E-mail</span><a href={`mailto:${l.email}`}>{l.email}</a></li>}

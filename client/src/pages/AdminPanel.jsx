@@ -11,6 +11,7 @@ import AgendaPanel from '../admin/consultorio/AgendaPanel'
 import FunilPanel from '../admin/consultorio/FunilPanel'
 import PacientesPanel from '../admin/consultorio/PacientesPanel'
 import HorariosPanel from '../admin/consultorio/HorariosPanel'
+import LeadsPanel from '../admin/sections/LeadsPanel'
 import '../styles/admin.css'
 import '../styles/consultorio.css'
 
@@ -18,6 +19,7 @@ const CUSTOM = {
   agenda: AgendaPanel,
   funil: FunilPanel,
   pacientes: PacientesPanel,
+  leads: LeadsPanel,
   horarios: HorariosPanel,
   visibility: VisibilityEditor,
   conta: AccountPanel,

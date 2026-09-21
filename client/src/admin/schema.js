@@ -412,6 +412,11 @@ export const SIDEBAR = [
   { key: 'agenda', label: 'Agenda', custom: true, espaco: 'consultorio' },
   { key: 'funil', label: 'Funil', custom: true, espaco: 'consultorio' },
   { key: 'pacientes', label: 'Pacientes', custom: true, espaco: 'consultorio' },
+  // A tela existia e nao estava no menu: zero imports, nenhum caminho ate ela.
+  // O CMS-GUIA.md:82 ja a descrevia pra Camilla, entao ela procuraria "Contatos
+  // recebidos" e nao encontraria. Fica no consultorio, ao lado do funil, porque
+  // e o mesmo assunto — quem entrou em contato e ainda nao virou paciente.
+  { key: 'leads', label: 'Contatos recebidos', custom: true, espaco: 'consultorio' },
   { grupo: 'Configuracao', espaco: 'consultorio' },
   { key: 'horarios', label: 'Horarios de atendimento', custom: true, espaco: 'consultorio' },
   { key: 'conta', label: 'Minha conta', custom: true, espaco: 'consultorio' },

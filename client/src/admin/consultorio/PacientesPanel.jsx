@@ -8,6 +8,7 @@ import { brtDataCurta } from '../../lib/brt'
 import PanelState, { SearchField } from '../ui/PanelState'
 import { IconeEditar, IconeExcluir, IconeWhatsApp } from '../ui/Icones'
 import DateField from '../ui/DateField'
+import { normalizaTelefone, linkWhatsApp } from '../../lib/telefone'
 
 /**
  * Pacientes: lista a esquerda, ficha a direita.
@@ -99,7 +100,7 @@ export default function PacientesPanel() {
             >
               <ul className="p-lista__itens">
                 {lista.map((p) => {
-                  const zap = p.telefone ? `https://wa.me/${String(p.telefone).replace(/\D/g, '')}` : null
+                  const zap = linkWhatsApp(normalizaTelefone(p.telefone)) || null
                   return (
                     <li key={p.id} className={`p-linha ${selecionado === p.id ? 'is-active' : ''}`}>
                       <button

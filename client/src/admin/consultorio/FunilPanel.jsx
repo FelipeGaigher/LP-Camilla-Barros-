@@ -4,6 +4,7 @@ import {
   confirmarAgendamento, mudarStatusAgendamento,
 } from '../../data/agendaApi'
 import PanelState from '../ui/PanelState'
+import { normalizaTelefone, linkWhatsApp } from '../../lib/telefone'
 
 /**
  * Funil da paciente — o kanban.
@@ -268,7 +269,7 @@ function NovoCard({ estagio, onCancelar, onCriado, onErro }) {
 }
 
 function Card({ card, colunas, salvando, onMover, onArquivar, onConfirmar, onRecusar }) {
-  const zap = card.telefone ? `https://wa.me/${String(card.telefone).replace(/\D/g, '')}` : null
+  const zap = linkWhatsApp(normalizaTelefone(card.telefone)) || null
   // Pedido de horario segura a agenda enquanto nao for respondido, entao ele
   // tem acao propria aqui — confirmar de dentro do funil evita a ida e volta
   // pra agenda so pra clicar num botao.

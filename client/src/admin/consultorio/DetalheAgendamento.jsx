@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { confirmarAgendamento, mudarStatusAgendamento, registrarAtendimento } from '../../data/agendaApi'
 import { IconeWhatsApp } from '../ui/Icones'
+import { normalizaTelefone, linkWhatsApp } from '../../lib/telefone'
 
 /**
  * Detalhe do agendamento, aberto ao clicar no horario da grade.
@@ -46,7 +47,7 @@ export default function DetalheAgendamento({ evento, onFechar, onMudou }) {
 
   if (!evento) return null
 
-  const zap = evento.telefone ? `https://wa.me/${String(evento.telefone).replace(/\D/g, '')}` : null
+  const zap = linkWhatsApp(normalizaTelefone(evento.telefone)) || null
 
   async function acao(fn) {
     setSalvando(true)
