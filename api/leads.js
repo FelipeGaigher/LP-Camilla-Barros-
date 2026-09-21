@@ -90,18 +90,27 @@ export default async function handler(req, res) {
       await recordLead(ip)
       vincularAPaciente(sql, linha?.id, chave)
 
-      // Fire and forget: se o Brevo estiver fora do ar, o lead ja esta salvo e
-      // a visitante nao pode ficar esperando o e-mail sair.
+      // Espera o envio. Era fire and forget, e por isso nenhum aviso chegou na
+      // Camilla desde que o site subiu: a funcao serverless congela quando a
+      // resposta sai, e a requisicao pro Brevo morre no meio. Ver brevo.js.
+      //
+      // O teto de 6s limita o que a visitante aguarda; o lead ja esta gravado,
+      // entao falha ou estouro de tempo nao muda a resposta — vira log.
       const destino = process.env.CONTACT_EMAIL
       if (destino) {
         const { subject, htmlContent, textContent } = leadNotificationEmail(lead)
-        sendBrevoEmail({
+        const envio = await sendBrevoEmail({
           to: destino,
           replyTo: lead.email || undefined,
           subject,
           htmlContent,
           textContent,
-        }).catch((err) => console.error('aviso de lead:', err?.message || err))
+          timeoutMs: 6000,
+        })
+        if (!envio.ok) console.error('aviso de lead nao saiu:', envio.status || '', envio.error || '')
+        else if (envio.skipped) console.warn('aviso de lead pulado — CONTACT_EMAIL ou BREVO_API_KEY ausente')
+      } else {
+        console.warn('aviso de lead pulado — CONTACT_EMAIL vazio')
       }
 
       return res.status(200).json({ ok: true })

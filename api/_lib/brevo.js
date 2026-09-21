@@ -17,14 +17,21 @@ function getSender() {
 /**
  * Envia e-mail transacional.
  *
+ * Quem chama SEMPRE espera (`await`). Nao existe envio solto aqui: na Vercel a
+ * funcao congela no instante em que a resposta sai, e promise pendente morre
+ * junto — o e-mail nunca chega no Brevo. Medido em 21/09/2026: o lead #10 foi
+ * gravado as 09:09:49 e a conta do Brevo nao registrou requisicao nenhuma.
+ * Quem espera passa `timeoutMs` curto pra limitar o que a visitante aguarda.
+ *
  * @param {object} opts
  * @param {string|string[]} opts.to
  * @param {string} [opts.replyTo]
  * @param {string} opts.subject
  * @param {string} opts.htmlContent
  * @param {string} [opts.textContent]
+ * @param {number} [opts.timeoutMs=10000]
  */
-export async function sendBrevoEmail({ to, replyTo, subject, htmlContent, textContent }) {
+export async function sendBrevoEmail({ to, replyTo, subject, htmlContent, textContent, timeoutMs = 10_000 }) {
   const apiKey = process.env.BREVO_API_KEY
   if (!apiKey) {
     console.warn('[brevo] BREVO_API_KEY ausente — e-mail nao enviado (no-op).')
@@ -53,7 +60,7 @@ export async function sendBrevoEmail({ to, replyTo, subject, htmlContent, textCo
         'api-key': apiKey,
       },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(timeoutMs),
     })
     if (!res.ok) {
       const errText = await res.text().catch(() => '')

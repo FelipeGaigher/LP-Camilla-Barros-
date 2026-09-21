@@ -164,10 +164,11 @@ export async function confirmarPedido(sql, { id, pacienteId = null }) {
              paciente_id = COALESCE(a.paciente_id, ${pacienteId}::int, (SELECT id FROM novo)),
              atualizado_em = NOW()
        WHERE a.id = ${id} AND a.status = 'pendente'
-      RETURNING a.id, a.paciente_id
+      RETURNING a.id, a.paciente_id, a.solicitante_nome, a.solicitante_email,
+                a.inicio, a.procedimento_nome
     `
     if (linhas.length === 0) return { ok: false, code: 'PEDIDO_JA_TRATADO' }
-    return { ok: true, id: linhas[0].id, pacienteId: linhas[0].paciente_id }
+    return { ok: true, id: linhas[0].id, pacienteId: linhas[0].paciente_id, agendamento: linhas[0] }
   } catch (err) {
     const code = traduzErro(err)
     if (code) return { ok: false, code }
@@ -189,7 +190,8 @@ export async function mudarStatus(sql, { id, status, motivo = null }) {
            expira_em = CASE WHEN ${status} = 'pendente' THEN expira_em ELSE NULL END,
            atualizado_em = NOW()
      WHERE id = ${id}
-    RETURNING id, status, paciente_id
+    RETURNING id, status, paciente_id, origem,
+              solicitante_nome, solicitante_email, inicio, procedimento_nome
   `
   if (linhas.length === 0) return { ok: false, code: 'NAO_ENCONTRADO' }
   return { ok: true, agendamento: linhas[0] }
@@ -235,13 +237,15 @@ export async function criarPeloPainel(sql, dados) {
              expira_em = NULL, atualizado_em = NOW()
        WHERE status = 'pendente'
          AND inicio < ${fim.toISOString()} AND fim > ${inicio.toISOString()}
-      RETURNING id
+      -- Devolve o contato de quem foi atropelado: quem pediu o horario pelo
+      -- site precisa saber que ele caiu. Ver avisarPaciente em agenda.js.
+      RETURNING id, solicitante_nome, solicitante_email, inicio
     `
     if (cancelados.length === 0) return { ok: false, code: 'HORARIO_OCUPADO' }
 
     try {
       const [linha] = await inserir()
-      return { ok: true, agendamento: linha, substituiu: cancelados.length }
+      return { ok: true, agendamento: linha, substituiu: cancelados.length, cancelados }
     } catch (err2) {
       const code = traduzErro(err2)
       if (code) return { ok: false, code }

@@ -47,7 +47,12 @@ function cabecalho() {
           </table>`
 }
 
-function wrap(title, inner) {
+// Rodape padrao: aviso interno, pra Camilla. Quem escreve pra paciente troca —
+// dizer "nao e preciso responder" a quem espera resposta e o oposto do que o
+// e-mail esta fazendo ali.
+const RODAPE_INTERNO = 'Mensagem automatica do site. Nao e preciso responder este e-mail.'
+
+function wrap(title, inner, rodape = RODAPE_INTERNO) {
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -63,7 +68,7 @@ function wrap(title, inner) {
         <tr><td style="padding:28px 32px 32px;">${inner}</td></tr>
       </table>
       <div style="max-width:560px;padding:16px 8px;font-size:12px;line-height:1.6;color:#7A8A92;">
-        Mensagem automatica do site. Nao e preciso responder este e-mail.
+        ${esc(rodape)}
       </div>
     </td></tr>
   </table>
@@ -226,6 +231,157 @@ export function novaSolicitacaoEmail({ nome, telefone, email, procedimento, quan
   return {
     subject: `Pedido de horario: ${nome || 'sem nome'} — ${quando || ''}`.trim(),
     htmlContent: wrap('Pedido de horario novo', inner),
+    textContent: texto,
+  }
+}
+
+// ------------------------------------------------- avisos para a paciente
+//
+// Ate 21/09/2026 nenhum canal avisava a paciente de nada: ela pedia horario,
+// o pedido nascia pendente com 48h de validade, a Camilla confirmava no painel
+// e a paciente nao ficava sabendo. Se expirasse, tambem nao. Os tres e-mails
+// abaixo fecham o ciclo — pedido recebido, confirmado e recusado.
+//
+// Regra que vale para os tres: o aviso NUNCA pode derrubar a acao. A decisao da
+// Camilla ja aconteceu; quem nao deixou e-mail simplesmente nao recebe. Quem
+// chama trata isso (agenda.js), nao o template.
+
+const RODAPE_PACIENTE = 'Voce recebeu este e-mail porque pediu um horario no site da Dra. Camilla Barros.'
+
+/** Botao grande, na cor da marca. */
+function botao(href, rotulo) {
+  return `<a href="${esc(href)}"
+             style="display:inline-block;background:${AZUL};color:#FFFFFF;text-decoration:none;
+                    padding:13px 26px;border-radius:8px;font-size:15px;font-weight:500;
+                    white-space:nowrap;">${esc(rotulo)}</a>`
+}
+
+/** `55` + DDD + numero, ou vazio quando nao da pra montar link de WhatsApp. */
+function paraWhatsApp(telefone) {
+  const digits = String(telefone || '').replace(/\D/g, '')
+  if (digits.length >= 12) return digits
+  return digits.length >= 10 ? `55${digits}` : ''
+}
+
+/**
+ * Pedido recebido — sai no mesmo instante em que ela envia.
+ *
+ * O unico conteudo que importa aqui e o prazo: ela acabou de escolher um
+ * horario que NAO esta confirmado, e precisa saber disso agora, nao quando
+ * aparecer na porta do consultorio.
+ */
+export function pedidoRecebidoEmail({ nome, procedimento, quando, expiraEm, whatsappConsultorio }) {
+  const primeiroNome = String(nome || '').trim().split(/\s+/)[0] || ''
+  const wa = paraWhatsApp(whatsappConsultorio)
+
+  const inner = `
+    <h1 style="margin:0 0 6px;font-size:21px;font-weight:600;color:${TEXTO};">Recebemos seu pedido de horario</h1>
+    <p style="margin:0 0 22px;font-size:15px;line-height:1.7;color:#5A6B73;">
+      ${primeiroNome ? `${esc(primeiroNome)}, o` : 'O'} horario abaixo esta guardado no seu nome enquanto
+      a Dra. Camilla confirma. <strong style="color:${TEXTO};">Ainda nao e um agendamento fechado</strong> —
+      voce recebe outro e-mail assim que ela responder.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      ${linha('Quando', quando)}
+      ${linha('Procedimento', procedimento)}
+      ${expiraEm ? linha('Responde ate', expiraEm) : ''}
+    </table>
+    ${wa ? `<p style="margin:26px 0 0;font-size:14px;line-height:1.7;color:#5A6B73;">
+      Precisa mudar alguma coisa ou tem pressa?
+      <a href="https://wa.me/${wa}" style="color:${AZUL};">Fale no WhatsApp</a>.
+    </p>` : ''}`
+
+  const texto = [
+    'Recebemos seu pedido de horario',
+    '',
+    'O horario esta guardado no seu nome enquanto a Dra. Camilla confirma.',
+    'Ainda nao e um agendamento fechado.',
+    '',
+    `Quando: ${quando || '-'}`,
+    `Procedimento: ${procedimento || '-'}`,
+    expiraEm ? `Responde ate: ${expiraEm}` : '',
+    wa ? `\nWhatsApp: https://wa.me/${wa}` : '',
+  ].filter(Boolean).join('\n')
+
+  return {
+    subject: `Recebemos seu pedido de horario — ${quando || ''}`.trim(),
+    htmlContent: wrap('Recebemos seu pedido de horario', inner, RODAPE_PACIENTE),
+    textContent: texto,
+  }
+}
+
+/** Confirmado. Aqui entra o endereco: e o e-mail que ela vai reabrir no dia. */
+export function pedidoConfirmadoEmail({ nome, procedimento, quando, endereco, mapsLink, whatsappConsultorio }) {
+  const primeiroNome = String(nome || '').trim().split(/\s+/)[0] || ''
+  const wa = paraWhatsApp(whatsappConsultorio)
+
+  const inner = `
+    <h1 style="margin:0 0 6px;font-size:21px;font-weight:600;color:${TEXTO};">Seu horario esta confirmado</h1>
+    <p style="margin:0 0 22px;font-size:15px;line-height:1.7;color:#5A6B73;">
+      ${primeiroNome ? `${esc(primeiroNome)}, esta` : 'Esta'} tudo certo. A Dra. Camilla te espera:
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+      ${linha('Quando', quando)}
+      ${linha('Procedimento', procedimento)}
+      ${linha('Onde', endereco)}
+    </table>
+    ${mapsLink ? `<div style="padding-top:24px;">${botao(mapsLink, 'Como chegar')}</div>` : ''}
+    ${wa ? `<p style="margin:26px 0 0;font-size:14px;line-height:1.7;color:#5A6B73;">
+      Se precisar remarcar ou desmarcar, avise pelo
+      <a href="https://wa.me/${wa}" style="color:${AZUL};">WhatsApp</a> — assim o horario fica livre pra outra pessoa.
+    </p>` : ''}`
+
+  const texto = [
+    'Seu horario esta confirmado',
+    '',
+    `Quando: ${quando || '-'}`,
+    `Procedimento: ${procedimento || '-'}`,
+    `Onde: ${endereco || '-'}`,
+    mapsLink ? `Como chegar: ${mapsLink}` : '',
+    wa ? `\nPrecisa remarcar? https://wa.me/${wa}` : '',
+  ].filter(Boolean).join('\n')
+
+  return {
+    subject: `Horario confirmado — ${quando || ''}`.trim(),
+    htmlContent: wrap('Seu horario esta confirmado', inner, RODAPE_PACIENTE),
+    textContent: texto,
+  }
+}
+
+/**
+ * Recusado ou cancelado.
+ *
+ * Nao expoe o motivo que a Camilla escreveu no painel: aquilo e anotacao
+ * interna ("paciente de outro convenio", "remarcou por telefone") e nao foi
+ * escrito pra ser lido por quem recebe. O e-mail so abre a porta de volta.
+ */
+export function pedidoRecusadoEmail({ nome, quando, whatsappConsultorio }) {
+  const primeiroNome = String(nome || '').trim().split(/\s+/)[0] || ''
+  const wa = paraWhatsApp(whatsappConsultorio)
+  const waText = encodeURIComponent('Ola! Pedi um horario pelo site e gostaria de ver outra data.')
+
+  const inner = `
+    <h1 style="margin:0 0 6px;font-size:21px;font-weight:600;color:${TEXTO};">Nao foi possivel confirmar esse horario</h1>
+    <p style="margin:0 0 22px;font-size:15px;line-height:1.7;color:#5A6B73;">
+      ${primeiroNome ? `${esc(primeiroNome)}, o` : 'O'} horario de <strong style="color:${TEXTO};">${esc(quando || '')}</strong>
+      nao ficou disponivel. Isso acontece — e a gente resolve rapido por outro caminho.
+    </p>
+    ${wa
+      ? `<div style="padding-top:4px;">${botao(`https://wa.me/${wa}?text=${waText}`, 'Escolher outra data')}</div>`
+      : `<p style="margin:0;font-size:15px;line-height:1.7;color:#5A6B73;">
+           Responda este e-mail que a gente encontra outro horario pra voce.
+         </p>`}`
+
+  const texto = [
+    'Nao foi possivel confirmar esse horario',
+    '',
+    `O horario de ${quando || '-'} nao ficou disponivel.`,
+    wa ? `\nEscolher outra data: https://wa.me/${wa}` : 'Responda este e-mail que a gente encontra outro horario.',
+  ].filter(Boolean).join('\n')
+
+  return {
+    subject: 'Sobre o seu pedido de horario',
+    htmlContent: wrap('Nao foi possivel confirmar esse horario', inner, RODAPE_PACIENTE),
     textContent: texto,
   }
 }

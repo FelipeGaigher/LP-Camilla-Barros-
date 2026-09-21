@@ -7,7 +7,9 @@ import {
 } from './_lib/rateLimit.js'
 import { normalizaTelefone } from './_lib/telefone.js'
 import { sendBrevoEmail } from './_lib/brevo.js'
-import { novaSolicitacaoEmail } from './_lib/emailTemplates.js'
+import {
+  novaSolicitacaoEmail, pedidoRecebidoEmail, pedidoConfirmadoEmail, pedidoRecusadoEmail,
+} from './_lib/emailTemplates.js'
 import { logAcesso } from './_lib/acessoLog.js'
 import { brtDayStart, brtDateKey, brtLabel, somaDias } from './_lib/brt.js'
 import {
@@ -275,17 +277,35 @@ async function acaoSolicitar(sql, req, res) {
 
   await recordAgenda(ip)
 
-  // Fire and forget: o pedido ja esta salvo, e a paciente nao pode ficar
-  // esperando o e-mail sair. A fila de pendentes no painel e a rede de
-  // seguranca enquanto o Brevo nao estiver configurado.
-  if (!r.repetido) avisarCamilla({ nome, telefone, email, mensagem, primeiraConsulta, proc, inicio, pedido: r.pedido })
+  // Espera os dois envios. Era fire and forget, e por isso nenhum aviso saia:
+  // a funcao serverless congela quando a resposta sai e a requisicao pro Brevo
+  // morre no meio (ver brevo.js). O pedido ja esta gravado — se o e-mail
+  // falhar, a fila de pendentes no painel continua sendo a rede de seguranca.
+  //
+  // `repetido` e o duplo clique dela mesma: nao avisa ninguem duas vezes.
+  if (!r.repetido) {
+    const consultorio = await dadosDoConsultorio(sql)
+    await avisarCamilla({ nome, telefone, email, mensagem, primeiraConsulta, proc, inicio, pedido: r.pedido })
+    await avisarPaciente(email, () =>
+      pedidoRecebidoEmail({
+        nome,
+        procedimento: proc.nome,
+        quando: brtLabel(inicio),
+        expiraEm: r.pedido.expira_em ? brtLabel(r.pedido.expira_em) : null,
+        whatsappConsultorio: consultorio.whatsappConsultorio,
+      })
+    )
+  }
 
   return res.status(200).json({ ok: true, ...resumoPublico(r.pedido) })
 }
 
-function avisarCamilla({ nome, telefone, email, mensagem, primeiraConsulta, proc, inicio, pedido }) {
+async function avisarCamilla({ nome, telefone, email, mensagem, primeiraConsulta, proc, inicio, pedido }) {
   const destino = process.env.CONTACT_EMAIL
-  if (!destino) return
+  if (!destino) {
+    console.warn('aviso de agendamento pulado — CONTACT_EMAIL vazio')
+    return
+  }
 
   const base = process.env.APP_URL || ''
   const { subject, htmlContent, textContent } = novaSolicitacaoEmail({
@@ -300,8 +320,58 @@ function avisarCamilla({ nome, telefone, email, mensagem, primeiraConsulta, proc
     painelUrl: base ? `${base.replace(/\/$/, '')}/gestao` : '',
   })
 
-  sendBrevoEmail({ to: destino, replyTo: email || undefined, subject, htmlContent, textContent })
-    .catch((err) => console.error('aviso de agendamento:', err?.message || err))
+  const r = await sendBrevoEmail({
+    to: destino, replyTo: email || undefined, subject, htmlContent, textContent, timeoutMs: 6000,
+  })
+  if (!r.ok) console.error('aviso de agendamento nao saiu:', r.status || '', r.error || '')
+}
+
+/**
+ * Endereco e WhatsApp do consultorio, pros e-mails da paciente.
+ *
+ * Le de site_sections porque e la que a Camilla edita — endereco chumbado no
+ * template seria o endereco de hoje congelado no dia em que alguem escreveu.
+ * Falha vira objeto vazio: o e-mail sai sem o bloco "Onde", nunca deixa de sair.
+ */
+async function dadosDoConsultorio(sql) {
+  try {
+    const linhas = await sql`
+      SELECT section_key, data FROM site_sections WHERE section_key IN ('footer', 'contato')
+    `
+    const mapa = Object.fromEntries(linhas.map((l) => [l.section_key, l.data || {}]))
+    const e = mapa.footer?.endereco || {}
+    const partes = [
+      [e.street, e.complement].filter(Boolean).join(', '),
+      [e.district, e.city && e.state ? `${e.city}/${e.state}` : e.city].filter(Boolean).join(' · '),
+    ].filter(Boolean)
+    return {
+      endereco: partes.join(' — ') || '',
+      mapsLink: e.mapsLink || '',
+      whatsappConsultorio: mapa.contato?.whatsapp?.number || '',
+    }
+  } catch (err) {
+    console.error('dados do consultorio:', err?.message || err)
+    return {}
+  }
+}
+
+/**
+ * Aviso para a PACIENTE. Nunca derruba a acao que o gerou.
+ *
+ * A decisao da Camilla ja esta gravada quando isto roda; se o Brevo falhar, ou
+ * se a paciente nao tiver deixado e-mail, a unica consequencia e uma linha de
+ * log. Por isso o try/catch aqui existe alem do que o sendBrevoEmail ja faz:
+ * montar o template tambem pode quebrar, e nao pode levar a confirmacao junto.
+ */
+async function avisarPaciente(email, montar) {
+  if (!email) return
+  try {
+    const { subject, htmlContent, textContent } = montar()
+    const r = await sendBrevoEmail({ to: email, subject, htmlContent, textContent, timeoutMs: 6000 })
+    if (!r.ok) console.error('aviso a paciente nao saiu:', r.status || '', r.error || '')
+  } catch (err) {
+    console.error('aviso a paciente:', err?.message || err)
+  }
 }
 
 // ---------------------------------------------------------------- painel
@@ -420,6 +490,22 @@ async function acaoCriar(sql, req, res, auth) {
     recurso: 'agenda', recursoId: r.agendamento.id, acao: 'create',
     userId: auth.userId, username: auth.username, ip: clientIp(req),
   })
+
+  // `forcar` atropela pedido pendente. Quem pediu pelo site achava que tinha um
+  // horario guardado — e ficaria esperando por um pedido que ja nao existe.
+  if (r.cancelados?.length) {
+    const consultorio = await dadosDoConsultorio(sql)
+    for (const c of r.cancelados) {
+      await avisarPaciente(c.solicitante_email, () =>
+        pedidoRecusadoEmail({
+          nome: c.solicitante_nome,
+          quando: brtLabel(c.inicio),
+          whatsappConsultorio: consultorio.whatsappConsultorio,
+        })
+      )
+    }
+  }
+
   return res.status(200).json({ ok: true, id: r.agendamento.id, substituiu: r.substituiu || 0 })
 }
 
@@ -441,6 +527,22 @@ async function acaoConfirmar(sql, req, res, auth) {
     recurso: 'agenda', recursoId: id, acao: 'update',
     userId: auth.userId, username: auth.username, ip: clientIp(req),
   })
+
+  // A paciente descobre pelo e-mail que o horario dela virou realidade. Antes
+  // disto, confirmar no painel nao produzia sinal nenhum pra quem pediu.
+  const a = r.agendamento
+  const consultorio = await dadosDoConsultorio(sql)
+  await avisarPaciente(a?.solicitante_email, () =>
+    pedidoConfirmadoEmail({
+      nome: a.solicitante_nome,
+      procedimento: a.procedimento_nome,
+      quando: brtLabel(a.inicio),
+      endereco: consultorio.endereco,
+      mapsLink: consultorio.mapsLink,
+      whatsappConsultorio: consultorio.whatsappConsultorio,
+    })
+  )
+
   return res.status(200).json({ ok: true, id: r.id, pacienteId: r.pacienteId })
 }
 
@@ -461,6 +563,25 @@ async function acaoStatus(sql, req, res, auth) {
     recurso: 'agenda', recursoId: id, acao: 'update',
     userId: auth.userId, username: auth.username, ip: clientIp(req),
   })
+
+  // So 'cancelado' avisa, e so o que veio do site.
+  //
+  // 'realizado' e 'faltou' sao registro do que ja aconteceu na cadeira —
+  // mandar e-mail depois da consulta e ruido. E encaixe criado pelo painel
+  // ('origem' = painel) nao tem solicitante: quem marcou foi ela, por telefone
+  // ou na recepcao, e ja avisou a pessoa pelo canal em que combinaram.
+  const a = r.agendamento
+  if (status === 'cancelado' && a?.origem === 'site') {
+    const consultorio = await dadosDoConsultorio(sql)
+    await avisarPaciente(a.solicitante_email, () =>
+      pedidoRecusadoEmail({
+        nome: a.solicitante_nome,
+        quando: brtLabel(a.inicio),
+        whatsappConsultorio: consultorio.whatsappConsultorio,
+      })
+    )
+  }
+
   return res.status(200).json({ ok: true, agendamento: r.agendamento })
 }
 
