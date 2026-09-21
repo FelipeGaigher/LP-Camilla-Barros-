@@ -314,7 +314,7 @@ export const defaults = {
       aviso: 'Este é um pedido de horário, não uma confirmação. Eu confirmo e você recebe o retorno pelo WhatsApp.',
       sucesso: 'Pedido de horário enviado. Eu confirmo pelo WhatsApp.',
       semHorario: 'Nesse dia não há horário livre. Escolha outro dia.',
-      verMais: 'Ver horários',
+      semVaga: 'A agenda dos próximos dias está cheia. Me manda sua mensagem por aqui que eu retorno assim que abrir uma data.',
       limpar: 'Enviar só a mensagem',
     },
 

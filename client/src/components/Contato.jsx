@@ -179,6 +179,7 @@ export default function Contato() {
                 textos={ag}
                 valor={horario}
                 conflito={conflito}
+                whatsappHref={wa}
                 onEscolher={(s) => {
                   setHorario(s)
                   setStatus({ state: 'idle', text: '' })

@@ -263,7 +263,10 @@ export const SCHEMA = {
           },
           { key: 'sucesso', label: 'Mensagem apos pedir horario', type: 'text' },
           { key: 'semHorario', label: 'Quando o dia nao tem horario livre', type: 'text' },
-          { key: 'verMais', label: 'Texto do botao que abre os horarios', type: 'text' },
+          {
+            key: 'semVaga', label: 'Quando nenhum dia tem horario livre', type: 'textarea',
+            hint: 'Aparece no lugar do calendario quando a agenda inteira esta cheia. Some o calendario, fica este texto e o link do WhatsApp.',
+          },
           { key: 'limpar', label: 'Texto para desistir do horario', type: 'text' },
         ],
       },
